@@ -1,0 +1,3 @@
+application {
+    mainClassName = 'org.jungletree.Main'
+}
