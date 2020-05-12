@@ -1,5 +1,7 @@
 module org.jungletree.startup {
-    requires static java.logging;
+    requires org.apache.logging.log4j;
+    requires static org.apache.logging.log4j.core;
+    requires static org.apache.logging.log4j.slf4j;
 
     requires org.jungletree;
 }

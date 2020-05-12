@@ -1,10 +1,11 @@
 package org.jungletree.startup;
 
-import lombok.extern.java.Log;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-@Log
 public class StartCLI {
+    private static final Logger log = LogManager.getLogger(StartCLI.class);
+    
     public static void main(String[] args) {
-        log.info("Hellooo");
     }
 }

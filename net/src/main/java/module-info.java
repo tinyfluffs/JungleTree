@@ -1,5 +1,5 @@
 module org.jungletree.net {
-    requires static java.logging;
+    requires static org.apache.logging.log4j;
 
     requires org.jungletree.api;
 }
