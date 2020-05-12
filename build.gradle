@@ -11,14 +11,6 @@ plugins {
 }
 
 allprojects {
-    group 'org.jungletree'
-    version '0.0.1-SNAPSHOT'
-
-    sourceCompatibility = JavaVersion.VERSION_14
-    targetCompatibility = JavaVersion.VERSION_14
-}
-
-subprojects {
     apply plugin: 'java'
 
     repositories {
@@ -26,10 +18,18 @@ subprojects {
         mavenCentral()
     }
 
+    group 'org.jungletree'
+    version '0.0.1-SNAPSHOT'
+
+    sourceCompatibility = JavaVersion.VERSION_14
+    targetCompatibility = JavaVersion.VERSION_14
+
     java {
         modularity.inferModulePath = true
     }
+}
 
+subprojects {
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
@@ -45,31 +45,40 @@ subprojects {
     }
 }
 
+application {
+    mainClassName = 'org.jungletree.startup.StartCLI'
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':world')
+    implementation project(':entity')
+    implementation project(':net')
+}
+
 project(':net') {
     dependencies {
-        compile project(':api')
+        compileOnly project(':api')
     }
 }
 
 project(':entity') {
     dependencies {
-        compile project(':api')
+        compileOnly project(':api')
     }
 }
 
 project(':world') {
     dependencies {
-        compile project(':api')
+        compileOnly project(':api')
     }
 }
 
 project(':core') {
-    apply plugin: 'application'
-
     dependencies {
-        compile project(':api')
-        compile project(':world')
-        compile project(':entity')
-        compile project(':net')
+        compileOnly project(':api')
+        compileOnly project(':world')
+        compileOnly project(':entity')
+        compileOnly project(':net')
     }
 }
