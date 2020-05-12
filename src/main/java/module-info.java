@@ -1,3 +1,2 @@
-module org.jungletree {
-    opens org.jungletree.startup;
+module org.jungletree.startup {
 }

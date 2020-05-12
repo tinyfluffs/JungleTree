@@ -1,0 +1,2 @@
+module org.jungletree.entity {
+}
