@@ -1,1 +1,4 @@
-module org.jungletree.world {}
+module org.jungletree.world {
+    requires static lombok;
+    requires static java.logging;
+}
