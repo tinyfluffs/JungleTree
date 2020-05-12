@@ -1,15 +1,21 @@
 package org.jungletree.api;
 
 public enum GameVersion {
-    VERSION_1_15_2(578);
+    VERSION_1_15_2("1.15.2", 578);
+    
+    private final String name;
+    private final int protocol;
 
-    private final int protocolVersion;
-
-    GameVersion(int protocolVersion) {
-        this.protocolVersion = protocolVersion;
+    GameVersion(String name, int protocolVersion) {
+        this.name = name;
+        this.protocol = protocolVersion;
     }
 
-    public int protocolVersion() {
-        return protocolVersion;
+    public String getName() {
+        return name;
+    }
+
+    public int getProtocol() {
+        return protocol;
     }
 }
