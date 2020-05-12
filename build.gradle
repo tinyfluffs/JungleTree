@@ -27,9 +27,7 @@ allprojects {
     java {
         modularity.inferModulePath = true
     }
-}
 
-subprojects {
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
@@ -51,6 +49,7 @@ application {
 
 dependencies {
     implementation project(':api')
+    implementation project(':core')
     implementation project(':world')
     implementation project(':entity')
     implementation project(':net')
