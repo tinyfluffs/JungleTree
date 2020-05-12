@@ -7,5 +7,7 @@ public interface Server {
     String motd();
     void motd(String motd);
     
-    GameVersion[] supportedGameVersions();
+    GameVersion getHighestSupportedGameVersion();
+
+    GameVersion[] getSupportedGameVersions();
 }

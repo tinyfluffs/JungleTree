@@ -1,3 +1,4 @@
 module org.jungletree.api {
-    requires static org.apache.commons.lang3;
+    exports org.jungletree.api;
+    exports org.jungletree.api.entity;
 }

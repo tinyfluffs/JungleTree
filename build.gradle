@@ -7,11 +7,19 @@ buildscript {
 
 plugins {
     id 'java'
+    id 'de.jjohannes.extra-java-module-info' version "0.1"
     id 'application'
+}
+
+application {
+    mainClassName = 'org.jungletree.startup.Main'
 }
 
 allprojects {
     apply plugin: 'java'
+    apply plugin: 'java-library'
+
+    apply plugin: 'de.jjohannes.extra-java-module-info'
 
     repositories {
         jcenter()
@@ -23,6 +31,10 @@ allprojects {
 
     sourceCompatibility = JavaVersion.VERSION_14
     targetCompatibility = JavaVersion.VERSION_14
+
+    extraJavaModuleInfo {
+        automaticModule("tomlj-1.0.0.jar", "tomlj")
+    }
 
     java {
         modularity.inferModulePath = true
@@ -38,14 +50,8 @@ allprojects {
     }
 }
 
-application {
-    mainClassName = 'org.jungletree.startup.StartCLI'
-}
-
 dependencies {
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.2'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.13.2'
-
 
     implementation project(':api')
     implementation project(':core')
