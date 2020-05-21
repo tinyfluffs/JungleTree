@@ -73,7 +73,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.jungletree.startup.Main</mainClass>
+                            <mainClass>org.jungletree.startup.Startup</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
