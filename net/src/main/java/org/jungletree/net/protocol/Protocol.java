@@ -37,7 +37,7 @@ public abstract class Protocol {
         try {
             handlers.bind(packet, handler);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
-            log.error("Error registering inbound {} in {}", inboundCodecs.find(packet).getOpcode(), getName(), ex);
+            log.error("Error registering inbound {}: protocol={}", inboundCodecs.find(packet).getOpcode(), getName(), ex);
         }
     }
 
@@ -45,7 +45,7 @@ public abstract class Protocol {
         try {
             inboundCodecs.bind(packet, codec, opcode);
         } catch (InstantiationException ex) {
-            log.error("Error registering inbound {} in {}", opcode, getName(), ex);
+            log.error("Error registering inbound packet {}: protocol={}", opcode, getName(), ex);
         }
     }
 
@@ -53,21 +53,21 @@ public abstract class Protocol {
         try {
             outboundCodecs.bind(message, codec, opcode);
         } catch (InstantiationException ex) {
-            log.error("Error registering inbound {} in {}", opcode, getName(), ex);
+            log.error("Error registering inbound packet {}: protocol={}", opcode, getName(), ex);
         }
     }
 
     public <P extends Packet> Handler<P> getPacketHandler(Class<P> clazz) {
         Handler<P> handler = handlers.find(clazz);
         if (handler == null) {
-            log.warn("No message handler for:  {} in {}", clazz.getSimpleName(), getName());
+            log.warn("No handler for packet {}: protocol={}", clazz.getSimpleName(), getName());
         }
         return handler;
     }
     public <M extends Packet> Codec.CodecRegistration getCodecRegistration(Class<M> clazz) {
         Codec.CodecRegistration reg = outboundCodecs.find(clazz);
         if (reg == null) {
-            log.warn("No codec to write: {} in {}", clazz.getSimpleName(), getName());
+            log.warn("No codec to write {}: protocol={}", clazz.getSimpleName(), getName());
         }
         return reg;
     }

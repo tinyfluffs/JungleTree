@@ -20,11 +20,11 @@ public class JungleChannelInitializer extends ChannelInitializer<SocketChannel> 
     static int READ_IDLE_TIMEOUT = 20;
     static int WRITE_IDLE_TIMEOUT = 15;
 
-    ConnectionManager connectionManager;
+    NetworkServer networkServer;
 
     @Override
     protected final void initChannel(SocketChannel c) {
-        PacketHandler handler = new PacketHandler(connectionManager);
+        PacketHandler handler = new PacketHandler(networkServer);
         CodecHandler codecs = new CodecHandler(Protocols.HANDSHAKE.getProtocol());
         FramingHandler framing = new FramingHandler();
 

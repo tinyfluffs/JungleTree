@@ -4,15 +4,29 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.http.HttpClient;
 
+@Getter
+@Log4j2
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public enum Protocols {
-    STATUS(new StatusProtocol()),
-    LOGIN(new LoginProtocol(new HttpClient())),
-    HANDSHAKE(new HandshakeProtocol()),
-    PLAY(new PlayProtocol());
+    HANDSHAKE(0, new HandshakeProtocol()),
+    STATUS(1, new StatusProtocol()),
+    LOGIN(2, new LoginProtocol(new HttpClient())),
+    PLAY(3, new PlayProtocol());
     
-    @Getter Protocol protocol;
+    int id;
+    Protocol protocol;
+    
+    public static Protocols fromId(int id) {
+        for (var p : values()) {
+            if (p.id == id) {
+                return p;
+            }
+        }
+        log.warn("No protocol found: id={}", id);
+        return HANDSHAKE;
+    }
 }

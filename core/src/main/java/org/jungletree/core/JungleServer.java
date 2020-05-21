@@ -5,6 +5,7 @@ import lombok.experimental.FieldDefaults;
 import org.jungletree.api.GameVersion;
 import org.jungletree.api.Server;
 import org.jungletree.api.exception.StartupException;
+import org.jungletree.core.handler.PacketHandlers;
 import org.jungletree.net.NetworkServer;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
@@ -34,7 +35,9 @@ public class JungleServer implements Server {
     NetworkServer netServ;
     Executor networkExecutor;
 
-    public JungleServer() {}
+    public JungleServer() {
+        PacketHandlers.registerAll();
+    }
 
     @Override
     public void start() throws StartupException {
