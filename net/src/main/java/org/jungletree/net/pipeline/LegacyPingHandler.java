@@ -75,8 +75,7 @@ public class LegacyPingHandler extends ChannelInboundHandlerAdapter {
                         break;
                 }*/
             }
-        } catch (RuntimeException expected) {
-            // Silently catch the exception
+        } catch (RuntimeException ignored) {
         } finally {
             // check if not successful, otherwise the connection has already been closed
             if (!legacyPingProtocol) {

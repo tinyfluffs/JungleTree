@@ -1,14 +1,10 @@
 package org.jungletree.net.packet.status;
 
+import lombok.Builder;
+import lombok.Value;
 import org.jungletree.net.Packet;
 
-import java.util.StringJoiner;
-
+@Value
+@Builder
 public class StatusRequestPacket implements Packet {
-
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", StatusRequestPacket.class.getSimpleName() + "[", "]")
-                .toString();
-    }
 }

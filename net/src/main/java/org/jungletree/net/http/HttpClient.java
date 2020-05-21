@@ -9,6 +9,8 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.resolver.dns.DnsAddressResolverGroup;
 import io.netty.resolver.dns.DnsServerAddressStreamProviders;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.NettyUtils;
 
 import javax.net.ssl.SSLException;
@@ -16,25 +18,19 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class HttpClient {
 
-    private DnsAddressResolverGroup resolverGroup;
+    DnsAddressResolverGroup resolverGroup;
 
     public HttpClient() {
         this.resolverGroup = new DnsAddressResolverGroup(
                 NettyUtils.bestDatagramChannel(),
-                DnsServerAddressStreamProviders.platformDefault());
+                DnsServerAddressStreamProviders.platformDefault()
+        );
     }
 
-    /**
-     * Opens a URL.
-     *
-     * @param url       the URL to download
-     * @param eventLoop an {@link EventLoop} that will receive the response body
-     * @param callback  a callback to handle the response or any error
-     */
     public void connect(String url, EventLoop eventLoop, HttpCallback callback) {
-
         URI uri = URI.create(url);
 
         String scheme = uri.getScheme() == null ? "http" : uri.getScheme();
@@ -80,10 +76,11 @@ public class HttpClient {
                 });
     }
 
+    @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
     private static class HttpChannelInitializer extends ChannelInitializer<Channel> {
 
-        private SslContext sslCtx;
-        private HttpCallback callback;
+        SslContext sslCtx;
+        HttpCallback callback;
 
         public HttpChannelInitializer(SslContext sslCtx, HttpCallback callback) {
             this.sslCtx = sslCtx;
@@ -92,8 +89,7 @@ public class HttpClient {
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
-            channel.pipeline()
-                    .addLast("timeout", new ReadTimeoutHandler(6000, TimeUnit.MILLISECONDS));
+            channel.pipeline().addLast("timeout", new ReadTimeoutHandler(6000, TimeUnit.MILLISECONDS));
             if (sslCtx != null) {
                 channel.pipeline().addLast("ssl", sslCtx.newHandler(channel.alloc()));
             }

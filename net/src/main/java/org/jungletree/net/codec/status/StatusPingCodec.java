@@ -14,6 +14,8 @@ public class StatusPingCodec implements Codec<StatusPingPacket> {
 
     @Override
     public StatusPingPacket decode(ByteBuf buf) {
-        return new StatusPingPacket(buf.readLong());
+        return StatusPingPacket.builder()
+                .time(buf.readLong())
+                .build();
     }
 }

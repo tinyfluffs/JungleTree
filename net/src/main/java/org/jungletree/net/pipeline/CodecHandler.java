@@ -5,8 +5,9 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToMessageCodec;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.ByteBufUtils;
 import org.jungletree.net.Codec;
 import org.jungletree.net.Packet;
@@ -14,11 +15,11 @@ import org.jungletree.net.protocol.Protocol;
 
 import java.util.List;
 
+@Log4j2
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public final class CodecHandler extends MessageToMessageCodec<ByteBuf, Packet> {
 
-    private static final Logger log = LogManager.getLogger(CodecHandler.class);
-
-    private final Protocol protocol;
+    Protocol protocol;
 
     public CodecHandler(Protocol protocol) {
         this.protocol = protocol;

@@ -1,38 +1,36 @@
 package org.jungletree.net.protocol;
 
 import io.netty.buffer.ByteBuf;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.ByteBufUtils;
 import org.jungletree.net.Codec;
 import org.jungletree.net.Packet;
+import org.jungletree.net.exception.UnknownPacketException;
 import org.jungletree.net.packet.Handler;
-import org.jungletree.net.exception.IllegalOpcodeException;
 import org.jungletree.net.service.CodecLookupService;
 import org.jungletree.net.service.HandlerLookupService;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
+@Log4j2
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public abstract class Protocol {
 
-    private static final Logger log = LogManager.getLogger(Protocol.class);
+    @Getter String name;
 
-    private final String name;
-
-    private final CodecLookupService inboundCodecs;
-    private final CodecLookupService outboundCodecs;
-    private final HandlerLookupService handlers;
+    CodecLookupService inboundCodecs;
+    CodecLookupService outboundCodecs;
+    HandlerLookupService handlers;
 
     public Protocol(String name, int highestOpcode) {
         this.name = name;
         this.inboundCodecs = new CodecLookupService(highestOpcode + 1);
         this.outboundCodecs = new CodecLookupService(highestOpcode + 1);
         this.handlers = new HandlerLookupService();
-    }
-
-    public String getName() {
-        return name;
     }
 
     public <P extends Packet, H extends Handler<P>> void handler(Class<P> packet, Class<H> handler) {
@@ -74,7 +72,7 @@ public abstract class Protocol {
         return reg;
     }
 
-    public Codec<?> readHeader(ByteBuf in) throws IllegalOpcodeException, IOException {
+    public Codec<?> readHeader(ByteBuf in) throws UnknownPacketException, IOException {
         int opcode = ByteBufUtils.readVarInt(in);
         return inboundCodecs.find(opcode);
     }
