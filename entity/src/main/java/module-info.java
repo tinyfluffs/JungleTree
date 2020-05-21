@@ -1,5 +1,3 @@
 module org.jungletree.entity {
-    requires static org.apache.logging.log4j;
-
-    requires org.jungletree.api;
+    requires org.apache.logging.log4j;
 }
