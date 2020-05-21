@@ -1,3 +1,3 @@
 # JungleTree
 
-Minecraft server software written in 24 hours
+Minecraft server software
