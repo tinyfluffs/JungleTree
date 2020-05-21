@@ -2,8 +2,8 @@ module org.jungletree.net {
     exports org.jungletree.net to org.jungletree.core;
     exports org.jungletree.net.packet to org.jungletree.core;
     exports org.jungletree.net.packet.status to org.jungletree.core;
+    exports org.jungletree.net.packet.handshake to org.jungletree.core;
     exports org.jungletree.net.protocol to org.jungletree.core;
-    exports org.jungletree.net.session to org.jungletree.core;
     exports org.jungletree.net.exception;
 
     requires static lombok;
