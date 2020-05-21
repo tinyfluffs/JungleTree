@@ -6,20 +6,23 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.LastHttpContent;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 
 import java.nio.charset.StandardCharsets;
 
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class HttpHandler extends SimpleChannelInboundHandler<Object> {
 
-    private final HttpCallback callback;
-    private final StringBuilder content = new StringBuilder();
-    
+    HttpCallback callback;
+    StringBuilder content = new StringBuilder();
+
     public HttpHandler(HttpCallback callback) {
         this.callback = callback;
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         try {
             callback.error(cause);
         } finally {
@@ -28,9 +31,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpResponse) {
             HttpResponse response = (HttpResponse) msg;
             int responseCode = response.status().code();
@@ -41,8 +43,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             if (responseCode != HttpResponseStatus.OK.code()) {
-                throw new IllegalStateException(
-                        "Expected HTTP response 200 OK, got " + responseCode);
+                throw new IllegalStateException("Expected HTTP response 200 OK, got " + responseCode);
             }
         }
 

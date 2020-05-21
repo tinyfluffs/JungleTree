@@ -13,6 +13,6 @@ public class StatusRequestCodec implements Codec<StatusRequestPacket> {
 
     @Override
     public StatusRequestPacket decode(ByteBuf buf) {
-        return new StatusRequestPacket();
+        return StatusRequestPacket.builder().build();
     }
 }

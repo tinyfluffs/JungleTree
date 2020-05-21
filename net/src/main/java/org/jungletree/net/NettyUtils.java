@@ -6,14 +6,14 @@ import io.netty.channel.kqueue.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.*;
 import io.netty.channel.socket.nio.*;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NettyUtils {
 
     public static final boolean EPOLL_AVAILABLE = Epoll.isAvailable();
     public static final boolean KQUEUE_AVAILABLE = KQueue.isAvailable();
-
-    private NettyUtils() {
-    }
 
     public static EventLoopGroup createBestEventLoopGroup() {
         if (EPOLL_AVAILABLE) {

@@ -1,7 +1,6 @@
-package org.jungletree.core.exception;
+package org.jungletree.api.exception;
 
 public class StartupException extends Exception {
-
     public StartupException() {
         super();
     }

@@ -1,8 +1,11 @@
 package org.jungletree.net.service;
 
+import lombok.AccessLevel;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.Codec;
 import org.jungletree.net.Packet;
-import org.jungletree.net.exception.IllegalOpcodeException;
+import org.jungletree.net.exception.UnknownPacketException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -10,12 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ToString
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CodecLookupService {
 
-    private final ConcurrentMap<Class<? extends Packet>, Codec.CodecRegistration> messages;
-    private final ConcurrentMap<Integer, Codec<? extends Packet>> opcodes;
-    private final Codec<? extends Packet>[] opcodeTable;
-    private final AtomicInteger nextId;
+    ConcurrentMap<Class<? extends Packet>, Codec.CodecRegistration> messages;
+    ConcurrentMap<Integer, Codec<? extends Packet>> opcodes;
+    Codec<? extends Packet>[] opcodeTable;
+    AtomicInteger nextId;
 
     public CodecLookupService(int size) {
         if (size < 0) {
@@ -89,24 +94,19 @@ public class CodecLookupService {
         }
     }
 
-    public Codec<?> find(int opcode) throws IllegalOpcodeException {
+    public Codec<?> find(int id) throws UnknownPacketException {
         try {
-            Codec<?> c = get(opcode);
+            Codec<?> c = get(id);
             if (c == null) {
                 throw new NullPointerException();
             }
             return c;
-        } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
-            throw new IllegalOpcodeException("Opcode " + opcode + " is not bound!");
+        } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
+            throw new UnknownPacketException(id);
         }
     }
 
     public <M extends Packet> Codec.CodecRegistration find(Class<M> clazz) {
         return messages.get(clazz);
-    }
-
-    @Override
-    public String toString() {
-        return "CodecLookupService{" + "messages=" + messages + ", opcodes=" + opcodes + '}';
     }
 }

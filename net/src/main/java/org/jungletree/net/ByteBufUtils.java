@@ -1,11 +1,14 @@
 package org.jungletree.net;
 
 import io.netty.buffer.ByteBuf;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class ByteBufUtils {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class ByteBufUtils {
 
     public static String readString(ByteBuf buf) throws IOException {
         final int len = readVarInt(buf);

@@ -1,8 +1,10 @@
 package org.jungletree.core;
 
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.api.GameVersion;
 import org.jungletree.api.Server;
-import org.jungletree.core.exception.StartupException;
+import org.jungletree.api.exception.StartupException;
 import org.jungletree.net.NetworkServer;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
@@ -16,18 +18,26 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
 
-    private final String name;
-    private final String motd;
+    String host;
+    int port;
 
-    private final String host;
-    private final int port;
+    String name;
+    String motd;
 
-    private final NetworkServer netServ;
-    private final Executor networkExecutor;
+    NetworkServer netServ;
+    Executor networkExecutor;
 
-    public JungleServer() throws StartupException {
+    public JungleServer() {}
+
+    @Override
+    public void start() throws StartupException {
         Path configFile = Paths.get("config.toml");
         if (!Files.exists(configFile)) {
             try {
@@ -53,24 +63,6 @@ public class JungleServer implements Server {
         this.networkExecutor.execute(() -> {
             netServ.bind(new InetSocketAddress(host, port));
         });
-    }
-
-    @Override
-    public String name() {
-        return null;
-    }
-
-    @Override
-    public void name(String name) {
-    }
-
-    @Override
-    public String motd() {
-        return null;
-    }
-
-    @Override
-    public void motd(String motd) {
     }
 
     @Override

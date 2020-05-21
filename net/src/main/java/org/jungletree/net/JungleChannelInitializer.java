@@ -5,29 +5,27 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jungletree.net.pipeline.PacketHandler;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.pipeline.*;
 import org.jungletree.net.protocol.Protocols;
 
+@Log4j2
+@AllArgsConstructor
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class JungleChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final Logger log = LogManager.getLogger(JungleChannelInitializer.class);
+    static int READ_IDLE_TIMEOUT = 20;
+    static int WRITE_IDLE_TIMEOUT = 15;
 
-    private static final int READ_IDLE_TIMEOUT = 20;
-    private static final int WRITE_IDLE_TIMEOUT = 15;
-
-    private final ConnectionManager connectionManager;
-
-    public JungleChannelInitializer(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
+    ConnectionManager connectionManager;
 
     @Override
     protected final void initChannel(SocketChannel c) {
         PacketHandler handler = new PacketHandler(connectionManager);
-        CodecHandler codecs = new CodecHandler(Protocols.HANDSHAKE.protocol());
+        CodecHandler codecs = new CodecHandler(Protocols.HANDSHAKE.getProtocol());
         FramingHandler framing = new FramingHandler();
 
         try {

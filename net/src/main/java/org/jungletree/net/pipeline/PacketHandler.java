@@ -1,16 +1,20 @@
 package org.jungletree.net.pipeline;
 
 import io.netty.channel.*;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.Tolerate;
 import org.jungletree.net.ConnectionManager;
 import org.jungletree.net.Packet;
 import org.jungletree.net.session.Session;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PacketHandler extends SimpleChannelInboundHandler<Packet> {
 
-    private final AtomicReference<Session> session = new AtomicReference<>(null);
-    private final ConnectionManager connectionManager;
+    AtomicReference<Session> session = new AtomicReference<>(null);
+    ConnectionManager connectionManager;
 
     public PacketHandler(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
@@ -43,6 +47,7 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet> {
         session.get().onInboundThrowable(cause);
     }
 
+    @Tolerate
     public Session getSession() {
         return session.get();
     }

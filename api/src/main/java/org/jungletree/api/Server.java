@@ -1,11 +1,16 @@
 package org.jungletree.api;
 
+import org.jungletree.api.exception.StartupException;
+
 public interface Server {
-    String name();
-    void name(String name);
     
-    String motd();
-    void motd(String motd);
+    void start() throws StartupException;
+
+    String getName();
+    void setName(String name);
+    
+    String getMotd();
+    void setMotd(String motd);
     
     GameVersion getHighestSupportedGameVersion();
 
