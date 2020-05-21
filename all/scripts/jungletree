@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+MODULES=$(find "../lib/jungletree/" -type f | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\:/g')
+java -Dfile.encoding=UTF-8 -p ${MODULES} -m org.jungletree.startup/org.jungletree.startup.Startup
