@@ -41,7 +41,6 @@ public final class Session {
     }
     
     public ChannelFuture sendFuture(Packet pkt) throws ChannelClosedException {
-        log.info(pkt.toString());
         if (!channel.isActive()) {
             throw new ChannelClosedException("Trying to send a message when a session is inactive!");
         }

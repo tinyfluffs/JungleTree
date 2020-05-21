@@ -11,6 +11,5 @@ public class HandshakeHandler implements Handler<HandshakePacket> {
     @Override
     public void handle(Session session, HandshakePacket pkt) {
         session.setProtocol(pkt.getNextState().getProtocol());
-        log.info(pkt);
     }
 }
