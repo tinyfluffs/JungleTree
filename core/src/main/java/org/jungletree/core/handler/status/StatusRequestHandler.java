@@ -17,8 +17,6 @@ public class StatusRequestHandler implements Handler<StatusRequestPacket> {
 
     @Override
     public void handle(Session session, StatusRequestPacket pkt) {
-        log.info(pkt);
-
         // TODO: Bukkit style events
         // TODO: Backwards compatibility with older protocol versions (inject here)
         
