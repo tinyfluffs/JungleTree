@@ -9,6 +9,7 @@ import org.jungletree.api.Player;
 import org.jungletree.api.Server;
 import org.jungletree.api.exception.StartupException;
 import org.jungletree.core.handler.PacketHandlers;
+import org.jungletree.core.version.JungleVersion;
 import org.jungletree.net.NetworkServer;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
@@ -111,6 +112,16 @@ public class JungleServer implements Server {
     @Override
     public void setServerStatusPlayerSampleCount(int count) {
         this.serverStatusPlayerSampleCount = count;
+    }
+
+    @Override
+    public String getApiVersion() {
+        return JungleVersion.getApiVersion();
+    }
+
+    @Override
+    public String getImplementationVersion() {
+        return JungleVersion.getImplementationVersion();
     }
 
     @Override

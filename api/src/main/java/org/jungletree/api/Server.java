@@ -18,6 +18,9 @@ public interface Server {
     
     int getServerStatusPlayerSampleCount();
     void setServerStatusPlayerSampleCount(int count);
+    
+    String getApiVersion();
+    String getImplementationVersion();
 
     GameVersion getHighestSupportedGameVersion();
 
