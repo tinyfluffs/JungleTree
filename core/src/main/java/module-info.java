@@ -12,6 +12,7 @@ module org.jungletree.core {
     requires org.jungletree.net;
 
     requires org.apache.logging.log4j;
+    requires org.json;
     requires tomlj;
-
+    requires java.desktop;
 }

@@ -2,7 +2,10 @@ package org.jungletree.core;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
+import org.json.JSONArray;
 import org.jungletree.api.GameVersion;
+import org.jungletree.api.Player;
 import org.jungletree.api.Server;
 import org.jungletree.api.exception.StartupException;
 import org.jungletree.core.handler.PacketHandlers;
@@ -10,15 +13,22 @@ import org.jungletree.net.NetworkServer;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 
+@Log4j2
 @Getter
 @Setter
 @ToString
@@ -31,6 +41,10 @@ public class JungleServer implements Server {
 
     String name;
     String motd;
+
+    int maxPlayers;
+    int serverStatusPlayerSampleCount;
+    byte[] favicon = new byte[0];
 
     NetworkServer netServ;
     Executor networkExecutor;
@@ -57,6 +71,17 @@ public class JungleServer implements Server {
             this.motd = config.getString("motd", () -> "A JungleTree Server");
             this.host = config.getString("server.host", () -> "127.0.0.1");
             this.port = Math.toIntExact(config.getLong("server.port", () -> 25565L));
+            this.maxPlayers = Math.toIntExact(config.getLong("server.max_players", () -> 1337L));
+            this.serverStatusPlayerSampleCount = Math.toIntExact(config.getLong("server.status.sample", () -> 10L));
+
+            var favIconPath = Paths.get(config.getString("server.icon", () -> "favicon.png")).toFile();
+            if (favIconPath.exists()) {
+                var out = new ByteArrayOutputStream();
+                var img = ImageIO.read(favIconPath);
+                ImageIO.write(img, "png", out);
+                this.favicon = out.toByteArray();
+                out.close();
+            }
         } catch (IOException ex) {
             throw new StartupException("Failed to read from configuration: ", ex);
         }
@@ -66,6 +91,26 @@ public class JungleServer implements Server {
         this.networkExecutor.execute(() -> {
             netServ.bind(new InetSocketAddress(host, port));
         });
+    }
+
+    @Override
+    public int getMaxPlayers() {
+        return maxPlayers;
+    }
+
+    @Override
+    public void setMaxPlayers(int maxPlayers) {
+        this.maxPlayers = maxPlayers;
+    }
+
+    @Override
+    public int getServerStatusPlayerSampleCount() {
+        return serverStatusPlayerSampleCount;
+    }
+
+    @Override
+    public void setServerStatusPlayerSampleCount(int count) {
+        this.serverStatusPlayerSampleCount = count;
     }
 
     @Override
@@ -83,6 +128,38 @@ public class JungleServer implements Server {
 
     @Override
     public GameVersion[] getSupportedGameVersions() {
-        return new GameVersion[] { GameVersion.VERSION_1_15_2 };
+        return new GameVersion[]{GameVersion.VERSION_1_15_2};
+    }
+
+    @Override
+    public Player[] getOnlinePlayers() {
+        // TODO: implement
+        return Arrays.copyOf(new Player[0], 0);
+    }
+
+    @Override
+    public JSONArray getServerListSample() {
+        ThreadLocalRandom rand = ThreadLocalRandom.current();
+
+        var result = new JSONArray();
+        int sampleSize = getServerStatusPlayerSampleCount();
+        var players = new ArrayList<Player>();
+        if (players.size() <= sampleSize) {
+            sampleSize = players.size();
+        } else {
+            for (int i=0; i<sampleSize; i++) {
+                Collections.swap(players, i, rand.nextInt(i, players.size()));
+            }
+        }
+
+        for (int i=0; i<sampleSize; i++) {
+            result.put(players.get(i).getProfile());
+        }
+        return result;
+    }
+
+    @Override
+    public byte[] getFavicon() {
+        return this.favicon;
     }
 }

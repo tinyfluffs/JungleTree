@@ -3,6 +3,7 @@ package org.jungletree.api;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import org.json.JSONObject;
 
 @Getter
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -15,5 +16,12 @@ public enum GameVersion {
     GameVersion(String name, int protocolVersion) {
         this.name = name;
         this.protocol = protocolVersion;
+    }
+    
+    public JSONObject toJson() {
+        var result = new JSONObject();
+        result.put("name", this.name);
+        result.put("protocol", this.protocol);
+        return result;
     }
 }
