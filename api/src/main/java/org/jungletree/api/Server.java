@@ -1,5 +1,6 @@
 package org.jungletree.api;
 
+import org.json.JSONArray;
 import org.jungletree.api.exception.StartupException;
 
 public interface Server {
@@ -12,7 +13,19 @@ public interface Server {
     String getMotd();
     void setMotd(String motd);
     
+    int getMaxPlayers();
+    void setMaxPlayers(int maxPlayers);
+    
+    int getServerStatusPlayerSampleCount();
+    void setServerStatusPlayerSampleCount(int count);
+
     GameVersion getHighestSupportedGameVersion();
 
     GameVersion[] getSupportedGameVersions();
+
+    Player[] getOnlinePlayers();
+
+    JSONArray getServerListSample();
+
+    byte[] getFavicon();
 }

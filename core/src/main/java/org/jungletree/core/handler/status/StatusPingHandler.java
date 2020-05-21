@@ -11,5 +11,6 @@ public class StatusPingHandler implements Handler<StatusPingPacket> {
     @Override
     public void handle(Session session, StatusPingPacket pkt) {
         log.info(pkt);
+        session.send(pkt);
     }
 }

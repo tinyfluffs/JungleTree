@@ -7,11 +7,13 @@ import org.jungletree.net.packet.status.StatusResponsePacket;
 import java.io.IOException;
 
 import static org.jungletree.net.ByteBufUtils.readString;
+import static org.jungletree.net.ByteBufUtils.writeString;
 
 public class StatusResponseCodec implements Codec<StatusResponsePacket> {
 
     @Override
-    public ByteBuf encode(ByteBuf buf, StatusResponsePacket p) {
+    public ByteBuf encode(ByteBuf buf, StatusResponsePacket p) throws IOException {
+        writeString(buf, p.getJson());
         return buf;
     }
 
