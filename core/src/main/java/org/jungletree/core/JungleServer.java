@@ -21,6 +21,10 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +33,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.jungletree.api.JungleTree.server;
+
 @Log4j2
 @Getter
 @Setter
@@ -36,6 +42,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @EqualsAndHashCode
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
+    
+    KeyPair keyPair;
 
     String host;
     int port;
@@ -43,11 +51,14 @@ public class JungleServer implements Server {
     String name;
     String motd;
 
+    boolean useEncryption;
+    int keySize;
+
     int maxPlayers;
     int serverStatusPlayerSampleCount;
     byte[] favicon = new byte[0];
 
-    NetworkServer netServ;
+    NetworkServer networkServer;
     Executor networkExecutor;
 
     public JungleServer() {
@@ -72,7 +83,9 @@ public class JungleServer implements Server {
             this.motd = config.getString("motd", () -> "A JungleTree Server");
             this.host = config.getString("server.host", () -> "127.0.0.1");
             this.port = Math.toIntExact(config.getLong("server.port", () -> 25565L));
-            this.maxPlayers = Math.toIntExact(config.getLong("server.max_players", () -> 1337L));
+            this.maxPlayers = Math.toIntExact(config.getLong("server.max_players", () -> 10L));
+            this.useEncryption = config.getBoolean("server.encryption.enabled", () -> true);
+            this.keySize = Math.toIntExact(config.getLong("server.encryption.key_size", () -> 4096L));
             this.serverStatusPlayerSampleCount = Math.toIntExact(config.getLong("server.status.sample", () -> 10L));
 
             var favIconPath = Paths.get(config.getString("server.icon", () -> "favicon.png")).toFile();
@@ -87,10 +100,18 @@ public class JungleServer implements Server {
             throw new StartupException("Failed to read from configuration: ", ex);
         }
 
-        this.netServ = new NetworkServer();
+        try {
+            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+            gen.initialize(server().getEncryptionKeySize());
+            this.keyPair = gen.generateKeyPair();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new StartupException("RSA unavailable: ", ex);
+        }
+
+        this.networkServer = new NetworkServer();
         this.networkExecutor = Executors.newSingleThreadExecutor();
         this.networkExecutor.execute(() -> {
-            netServ.bind(new InetSocketAddress(host, port));
+            networkServer.bind(new InetSocketAddress(host, port));
         });
     }
 
@@ -172,5 +193,20 @@ public class JungleServer implements Server {
     @Override
     public byte[] getFavicon() {
         return this.favicon;
+    }
+
+    @Override
+    public int getEncryptionKeySize() {
+        return keySize;
+    }
+
+    @Override
+    public boolean isEncryptionEnabled() {
+        return useEncryption;
+    }
+
+    @Override
+    public PublicKey getPublicKey() {
+        return keyPair.getPublic();
     }
 }

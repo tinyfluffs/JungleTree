@@ -3,23 +3,30 @@ package org.jungletree.api;
 import org.json.JSONArray;
 import org.jungletree.api.exception.StartupException;
 
+import java.security.PublicKey;
+
 public interface Server {
-    
+
     void start() throws StartupException;
 
     String getName();
+
     void setName(String name);
-    
+
     String getMotd();
+
     void setMotd(String motd);
-    
+
     int getMaxPlayers();
+
     void setMaxPlayers(int maxPlayers);
-    
+
     int getServerStatusPlayerSampleCount();
+
     void setServerStatusPlayerSampleCount(int count);
-    
+
     String getApiVersion();
+
     String getImplementationVersion();
 
     GameVersion getHighestSupportedGameVersion();
@@ -31,4 +38,10 @@ public interface Server {
     JSONArray getServerListSample();
 
     byte[] getFavicon();
+
+    int getEncryptionKeySize();
+
+    boolean isEncryptionEnabled();
+
+    PublicKey getPublicKey();
 }
