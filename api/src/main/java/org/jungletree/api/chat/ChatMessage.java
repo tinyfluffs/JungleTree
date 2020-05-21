@@ -14,4 +14,11 @@ public class ChatMessage {
         result.put("text", text);
         return result;
     }
+
+    public static ChatMessage fromJson(String jsonString) {
+        var json = new JSONObject(jsonString);
+        return ChatMessage.builder()
+                .text(json.getString("text"))
+                .build();
+    }
 }

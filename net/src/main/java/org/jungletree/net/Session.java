@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.exception.ChannelClosedException;
@@ -14,16 +15,24 @@ import org.jungletree.net.protocol.Protocol;
 import org.jungletree.net.protocol.Protocols;
 
 import java.net.InetSocketAddress;
+import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class Session {
-    
+
+    static final SecureRandom secRandom = new SecureRandom();
+
+    @Getter final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
     final AtomicBoolean disconnected = new AtomicBoolean();
     final Channel channel;
 
     @Getter Protocol protocol;
+
+    @Getter @Setter String verifyUsername;
+    @Getter byte[] verifyToken;
 
     public Session(Channel channel) {
         this.channel = channel;
@@ -107,5 +116,12 @@ public final class Session {
 
     public <T extends Packet> void onHandlerThrowable(T pkt, Handler<T> handler, Throwable cause) {
         log.error("Error handling {} (handler: {})", pkt, handler.getClass().getSimpleName(), cause);
+    }
+
+    public byte[] generateVerifyToken() {
+        var token = new byte[4];
+        secRandom.nextBytes(token);
+        this.verifyToken = token;
+        return token;
     }
 }
