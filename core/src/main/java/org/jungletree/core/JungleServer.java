@@ -8,9 +8,10 @@ import org.jungletree.api.GameVersion;
 import org.jungletree.api.Player;
 import org.jungletree.api.Server;
 import org.jungletree.api.exception.StartupException;
+import org.jungletree.api.player.ProfileItem;
 import org.jungletree.core.handler.PacketHandlers;
-import org.jungletree.core.version.JungleVersion;
 import org.jungletree.net.NetworkServer;
+import org.jungletree.net.Session;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
 
@@ -21,45 +22,39 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.jungletree.api.JungleTree.server;
-
 @Log4j2
-@Getter
-@Setter
 @ToString
 @EqualsAndHashCode
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
 
+    final SortedMap<String, JunglePlayer> onlinePlayers;
+
     String host;
     int port;
 
-    String name;
-    String motd;
+    @Getter @Setter String name;
+    @Getter @Setter String motd;
 
     boolean useEncryption;
     int keySize;
 
-    int maxPlayers;
-    int serverStatusPlayerSampleCount;
-    byte[] favicon = new byte[0];
+    @Getter @Setter int maxPlayers;
+    @Getter @Setter int serverStatusPlayerSampleCount;
+    @Getter @Setter byte[] favicon = new byte[0];
 
     NetworkServer networkServer;
     Executor networkExecutor;
 
+
     public JungleServer() {
+        this.onlinePlayers = new TreeMap<>();
+
         PacketHandlers.registerAll();
     }
 
@@ -125,12 +120,12 @@ public class JungleServer implements Server {
 
     @Override
     public String getApiVersion() {
-        return JungleVersion.getApiVersion();
+        return Versioning.getApiVersion();
     }
 
     @Override
     public String getImplementationVersion() {
-        return JungleVersion.getImplementationVersion();
+        return Versioning.getImplementationVersion();
     }
 
     @Override
@@ -167,12 +162,12 @@ public class JungleServer implements Server {
         if (players.size() <= sampleSize) {
             sampleSize = players.size();
         } else {
-            for (int i=0; i<sampleSize; i++) {
+            for (int i = 0; i < sampleSize; i++) {
                 Collections.swap(players, i, rand.nextInt(i, players.size()));
             }
         }
 
-        for (int i=0; i<sampleSize; i++) {
+        for (int i = 0; i < sampleSize; i++) {
             result.put(players.get(i).getProfile());
         }
         return result;
@@ -191,5 +186,23 @@ public class JungleServer implements Server {
     @Override
     public boolean isEncryptionEnabled() {
         return useEncryption;
+    }
+
+    public void setPlayer(Session session, UUID uuid, String username, ProfileItem[] profile) {
+        if (!session.isActive()) {
+            return;
+        }
+
+        var player = new JunglePlayer(session, uuid, username, profile);
+
+        for (Map.Entry<String, JunglePlayer> e : this.onlinePlayers.entrySet()) {
+            if (e.getValue().getUuid().equals(uuid)) {
+                e.getValue().getSession().disconnect("You logged in from another location.");
+                break;
+            }
+        }
+
+        player.join();
+        session.setOnline(true);
     }
 }

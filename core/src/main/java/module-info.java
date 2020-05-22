@@ -16,4 +16,5 @@ module org.jungletree.core {
     requires org.json;
     requires tomlj;
     requires java.desktop;
+    requires org.jungletree.entity;
 }

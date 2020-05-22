@@ -6,7 +6,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.jungletree.api.exception.StartupException;
 
@@ -86,7 +85,7 @@ public class NetworkServer {
         return keyPair.getPublic();
     }
 
-    PrivateKey getPrivateKey() {
+    protected PrivateKey getPrivateKey() {
         return keyPair.getPrivate();
     }
 

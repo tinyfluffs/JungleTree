@@ -1,4 +1,4 @@
-package org.jungletree.core.version;
+package org.jungletree.core;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import java.util.Properties;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class JungleVersion {
+public final class Versioning {
     
     private static final String UNKNOWN_VERSION_NAME = "UNKNOWN";
 
@@ -29,7 +29,7 @@ public final class JungleVersion {
     
     private static String getVersion(String resourceFile) {
         try {
-            var propsFile = JungleVersion.class.getClassLoader().getResourceAsStream(resourceFile);
+            var propsFile = Versioning.class.getClassLoader().getResourceAsStream(resourceFile);
             Properties properties = new Properties();
             properties.load(propsFile);
             return properties.getProperty("version");
