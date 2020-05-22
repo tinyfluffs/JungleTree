@@ -4,18 +4,38 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jungletree.api.chat.ChatMessage;
+import org.jungletree.api.util.UUIDs;
 import org.jungletree.net.exception.ChannelClosedException;
+import org.jungletree.net.http.HttpCallback;
+import org.jungletree.net.packet.DisconnectPacket;
 import org.jungletree.net.packet.Handler;
 import org.jungletree.net.pipeline.CodecHandler;
+import org.jungletree.net.pipeline.EncryptionHandler;
+import org.jungletree.net.protocol.LoginProtocol;
 import org.jungletree.net.protocol.Protocol;
 import org.jungletree.net.protocol.Protocols;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,18 +43,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class Session {
 
+    private static final String SESSION_URL = "https://sessionserver.mojang.com/session/minecraft/hasJoined";
+
     static final SecureRandom secRandom = new SecureRandom();
 
-    @Getter final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
+    @Getter
+    final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
     final AtomicBoolean disconnected = new AtomicBoolean();
+    @Getter
+    final NetworkServer networkServer;
     final Channel channel;
 
-    @Getter Protocol protocol;
+    @Getter
+    Protocol protocol;
 
-    @Getter @Setter String verifyUsername;
-    @Getter byte[] verifyToken;
+    @Getter
+    @Setter
+    String verifyUsername;
+    @Getter
+    byte[] verifyToken;
 
-    public Session(Channel channel) {
+    @Getter
+    ProfileProperty[] profileProperties;
+
+    public Session(NetworkServer networkServer, Channel channel) {
+        this.networkServer = networkServer;
         this.channel = channel;
         this.protocol = Protocols.HANDSHAKE.getProtocol();
     }
@@ -48,7 +81,7 @@ public final class Session {
             sendFuture(pkt);
         }
     }
-    
+
     public ChannelFuture sendFuture(Packet pkt) throws ChannelClosedException {
         if (!channel.isActive()) {
             throw new ChannelClosedException("Trying to send a message when a session is inactive!");
@@ -59,7 +92,7 @@ public final class Session {
             }
         });
     }
-    
+
     public InetSocketAddress getAddress() {
         var addr = channel.remoteAddress();
         if (!(addr instanceof InetSocketAddress)) {
@@ -88,7 +121,7 @@ public final class Session {
         updatePipeline("codecs", new CodecHandler(protocol));
         this.protocol = protocol;
     }
-    
+
     private void updatePipeline(String key, ChannelHandler handler) {
         this.channel.pipeline().replace(key, key, handler);
     }
@@ -101,6 +134,16 @@ public final class Session {
         channel.close();
     }
 
+    public void disconnect(String reason) {
+        disconnect(ChatMessage.builder().text(reason).build());
+    }
+
+    public void disconnect(ChatMessage reason) {
+        send(DisconnectPacket.builder().reason(reason).build());
+        channel.flush();
+        channel.close();
+    }
+
     public void onConnect() {
     }
 
@@ -110,7 +153,7 @@ public final class Session {
 
     public void onInboundThrowable(Throwable cause) {
     }
-    
+
     public void onOutboundThrowable(Throwable cause) {
     }
 
@@ -123,5 +166,105 @@ public final class Session {
         secRandom.nextBytes(token);
         this.verifyToken = token;
         return token;
+    }
+
+    public void enableEncryption(Session session, byte[] sharedSecret, byte[] encryptedVerifyToken) {
+        Cipher cipher;
+        var privateKey = networkServer.getPrivateKey();
+
+        SecretKey sharedKey;
+        try {
+            cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+            sharedKey = new SecretKeySpec(cipher.doFinal(sharedSecret), "AES");
+        } catch (Exception ex) {
+            log.warn("Failed to enable encryption cipher for client: ", ex);
+            session.disconnect();
+            return;
+        }
+
+        byte[] verifyToken;
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            verifyToken = cipher.doFinal(encryptedVerifyToken);
+        } catch (Exception ex) {
+            log.warn("Bad key for client: username={}", verifyUsername, ex);
+            session.disconnect();
+            return;
+        }
+
+        if (!Arrays.equals(verifyToken, this.verifyToken)) {
+            log.warn("Bad token for client: username={}", verifyUsername);
+            session.disconnect();
+            return;
+        }
+
+        try {
+            updatePipeline("encryption", new EncryptionHandler(sharedKey));
+        } catch (GeneralSecurityException ex) {
+            log.error(ex);
+            session.disconnect();
+            return;
+        }
+
+        String hash;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            digest.update(sessionId.getBytes());
+            digest.update(sharedKey.getEncoded());
+            digest.update(networkServer.getPublicKey().getEncoded());
+
+            hash = new BigInteger(digest.digest()).toString(16);
+        } catch (NoSuchAlgorithmException ex) {
+            log.error(ex);
+            session.disconnect();
+            return;
+        }
+
+        String url = String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", verifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8));
+        if (!(protocol instanceof LoginProtocol)) {
+            session.disconnect();
+            log.warn("Login protocol not used when we haven't finished validation");
+            return;
+        }
+
+        ((LoginProtocol) protocol).getHttpClient().connect(url, channel.eventLoop(), new ClientAuthCallback(session));
+    }
+
+    private void setPlayer(UUID uuid, String username, ProfileProperty[] properties) {
+    }
+
+    @AllArgsConstructor
+    private static class ClientAuthCallback implements HttpCallback {
+        private final Session session;
+
+        @Override
+        public void done(String response) {
+            JSONObject json = new JSONObject(response);
+
+            UUID uuid = UUIDs.fromFlatString(json.getString("id"));
+            String username = json.getString("name");
+
+            JSONArray props = json.getJSONArray("properties");
+            ProfileProperty[] properties = new ProfileProperty[props.length()];
+
+            JSONObject o;
+            for (int i = 0; i < properties.length; i++) {
+                o = props.getJSONObject(i);
+                properties[i] = ProfileProperty.builder()
+                        .name(o.getString("name"))
+                        .value(o.getString("value"))
+                        .signature(o.getString("signature"))
+                        .build();
+            }
+
+            session.setPlayer(uuid, username, properties);
+        }
+
+        @Override
+        public void error(Throwable throwable) {
+            session.disconnect();
+        }
     }
 }

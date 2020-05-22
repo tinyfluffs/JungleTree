@@ -21,4 +21,5 @@ module org.jungletree.net {
     requires io.netty.codec;
     requires io.netty.common;
     requires org.jungletree.api;
+    requires org.json;
 }

@@ -1,4 +1,4 @@
-package org.jungletree.net.packet.login;
+package org.jungletree.net.packet;
 
 import lombok.Builder;
 import lombok.Value;

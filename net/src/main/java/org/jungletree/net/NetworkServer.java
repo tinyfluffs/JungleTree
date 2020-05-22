@@ -6,14 +6,16 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import org.jungletree.api.exception.StartupException;
 
 import java.net.SocketAddress;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+
+import static org.jungletree.api.JungleTree.server;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NetworkServer {
@@ -22,9 +24,18 @@ public class NetworkServer {
     final EventLoopGroup boss = NettyUtils.createBestEventLoopGroup();
     final EventLoopGroup worker = NettyUtils.createBestEventLoopGroup();
 
+    KeyPair keyPair;
     Channel channel;
 
-    public NetworkServer() {
+    public NetworkServer() throws StartupException {
+        try {
+            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+            gen.initialize(server().getEncryptionKeySize());
+            this.keyPair = gen.generateKeyPair();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new StartupException("RSA unavailable: ", ex);
+        }
+
         bootstrap.group(boss, worker)
                 .channel(NettyUtils.bestServerSocketChannel())
                 .childHandler(new JungleChannelInitializer(this))
@@ -59,7 +70,7 @@ public class NetworkServer {
     }
 
     public Session newSession(Channel c) {
-        return new Session(c);
+        return new Session(this, c);
     }
 
     public void sessionInactivated(Session session) {
@@ -69,6 +80,14 @@ public class NetworkServer {
     }
 
     public void onBindFailure(SocketAddress address, Throwable t) {
+    }
+
+    public PublicKey getPublicKey() {
+        return keyPair.getPublic();
+    }
+
+    PrivateKey getPrivateKey() {
+        return keyPair.getPrivate();
     }
 
     // TODO: Find a new home

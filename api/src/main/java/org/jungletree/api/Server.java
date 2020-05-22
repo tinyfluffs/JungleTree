@@ -42,6 +42,4 @@ public interface Server {
     int getEncryptionKeySize();
 
     boolean isEncryptionEnabled();
-
-    PublicKey getPublicKey();
 }

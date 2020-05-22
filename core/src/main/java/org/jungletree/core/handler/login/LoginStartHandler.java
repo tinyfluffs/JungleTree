@@ -17,7 +17,7 @@ public class LoginStartHandler implements Handler<LoginStartPacket> {
             session.send(
                     EncryptionRequestPacket.builder()
                             .sessionId(session.getSessionId())
-                            .publicKey(server().getPublicKey().getEncoded())
+                            .publicKey(session.getNetworkServer().getPublicKey().getEncoded())
                             .verifyToken(session.generateVerifyToken())
                             .build()
             );
