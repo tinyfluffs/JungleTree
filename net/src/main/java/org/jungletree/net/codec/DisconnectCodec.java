@@ -1,8 +1,8 @@
-package org.jungletree.net.codec.login;
+package org.jungletree.net.codec;
 
 import io.netty.buffer.ByteBuf;
 import org.jungletree.net.Codec;
-import org.jungletree.net.packet.login.DisconnectPacket;
+import org.jungletree.net.packet.DisconnectPacket;
 
 import java.io.IOException;
 

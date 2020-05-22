@@ -42,8 +42,6 @@ import static org.jungletree.api.JungleTree.server;
 @EqualsAndHashCode
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
-    
-    KeyPair keyPair;
 
     String host;
     int port;
@@ -100,19 +98,9 @@ public class JungleServer implements Server {
             throw new StartupException("Failed to read from configuration: ", ex);
         }
 
-        try {
-            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
-            gen.initialize(server().getEncryptionKeySize());
-            this.keyPair = gen.generateKeyPair();
-        } catch (NoSuchAlgorithmException ex) {
-            throw new StartupException("RSA unavailable: ", ex);
-        }
-
         this.networkServer = new NetworkServer();
         this.networkExecutor = Executors.newSingleThreadExecutor();
-        this.networkExecutor.execute(() -> {
-            networkServer.bind(new InetSocketAddress(host, port));
-        });
+        this.networkExecutor.execute(() -> networkServer.bind(new InetSocketAddress(host, port)));
     }
 
     @Override
@@ -203,10 +191,5 @@ public class JungleServer implements Server {
     @Override
     public boolean isEncryptionEnabled() {
         return useEncryption;
-    }
-
-    @Override
-    public PublicKey getPublicKey() {
-        return keyPair.getPublic();
     }
 }

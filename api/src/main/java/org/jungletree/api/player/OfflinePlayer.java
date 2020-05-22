@@ -1,4 +1,4 @@
-package org.jungletree.api;
+package org.jungletree.api.player;
 
 import org.json.JSONObject;
 
@@ -10,4 +10,5 @@ public interface OfflinePlayer {
     String getDisplayName();
     void setDisplayName(String displayName);
     JSONObject getProfile();
+    String getTexture();
 }
