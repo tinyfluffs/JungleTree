@@ -3,6 +3,8 @@ package org.jungletree.api;
 import org.json.JSONArray;
 import org.jungletree.api.exception.StartupException;
 
+import java.util.List;
+
 public interface Server {
 
     void start() throws StartupException;
@@ -31,7 +33,7 @@ public interface Server {
 
     GameVersion[] getSupportedGameVersions();
 
-    Player[] getOnlinePlayers();
+    List<Player> getOnlinePlayers();
 
     JSONArray getServerListSample();
 

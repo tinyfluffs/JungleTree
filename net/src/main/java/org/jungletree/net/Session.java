@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
+import org.jungletree.api.Player;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.net.exception.ChannelClosedException;
 import org.jungletree.net.http.HttpCallback;
@@ -35,6 +36,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 @Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -53,6 +55,8 @@ public final class Session implements Comparable<Session> {
     @Getter Protocol protocol;
     @Getter @Setter String verifyUsername;
     @Getter byte[] verifyToken;
+    @Getter Player player;
+    Consumer<Player> callback;
 
     public Session(NetworkServer networkServer, Channel channel) {
         this.networkServer = networkServer;
@@ -122,11 +126,18 @@ public final class Session implements Comparable<Session> {
         this.channel.pipeline().replace(key, key, handler);
     }
 
+    public void setPlayer(Player player, Consumer<Player> callback) {
+        this.player = player;
+        this.callback = callback;
+    }
+
     public boolean isActive() {
         return channel.isActive();
     }
 
     public void disconnect() {
+        callback.accept(player);
+        channel.flush();
         channel.close();
     }
 
@@ -136,6 +147,7 @@ public final class Session implements Comparable<Session> {
 
     public void disconnect(ChatMessage reason) {
         send(DisconnectPacket.builder().reason(reason).build());
+        callback.accept(player);
         channel.flush();
         channel.close();
     }
@@ -145,12 +157,17 @@ public final class Session implements Comparable<Session> {
 
     public void onDisconnect() {
         this.disconnected.set(true);
+        if (callback != null) {
+            callback.accept(player);
+        }
     }
 
     public void onInboundThrowable(Throwable cause) {
+        log.error(cause);
     }
 
     public void onOutboundThrowable(Throwable cause) {
+        log.error(cause);
     }
 
     public <T extends Packet> void onHandlerThrowable(T pkt, Handler<T> handler, Throwable cause) {

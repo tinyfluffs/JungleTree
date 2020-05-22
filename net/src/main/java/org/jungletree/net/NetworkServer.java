@@ -73,6 +73,7 @@ public class NetworkServer {
     }
 
     public void sessionInactivated(Session session) {
+        session.setOnline(false);
     }
 
     public void onBindSuccess(SocketAddress address) {
