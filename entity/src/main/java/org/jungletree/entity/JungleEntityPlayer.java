@@ -1,10 +1,16 @@
 package org.jungletree.entity;
 
 import org.jungletree.api.entity.EntityPlayer;
+import org.jungletree.api.entity.EntityType;
 
-public class JungleEntityPlayer implements EntityPlayer {
+public class JungleEntityPlayer extends JungleEntityHuman implements EntityPlayer {
+
+    public JungleEntityPlayer(int entityId) {
+        super(entityId);
+    }
+
     @Override
-    public int getEntityId() {
-        return 0;
+    public EntityType getType() {
+        return EntityType.PLAYER;
     }
 }

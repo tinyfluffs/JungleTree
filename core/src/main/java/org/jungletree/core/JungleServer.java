@@ -12,6 +12,8 @@ import org.jungletree.api.player.ProfileItem;
 import org.jungletree.core.handler.PacketHandlers;
 import org.jungletree.net.NetworkServer;
 import org.jungletree.net.Session;
+import org.jungletree.net.packet.login.LoginSuccessPacket;
+import org.jungletree.net.protocol.Protocols;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
 
@@ -33,7 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
 
-    final SortedMap<String, JunglePlayer> onlinePlayers;
+    final SortedMap<UUID, JunglePlayer> onlinePlayers;
 
     String host;
     int port;
@@ -50,7 +52,6 @@ public class JungleServer implements Server {
 
     NetworkServer networkServer;
     Executor networkExecutor;
-
 
     public JungleServer() {
         this.onlinePlayers = new TreeMap<>();
@@ -147,9 +148,11 @@ public class JungleServer implements Server {
     }
 
     @Override
-    public Player[] getOnlinePlayers() {
-        // TODO: implement
-        return Arrays.copyOf(new Player[0], 0);
+    public List<Player> getOnlinePlayers() {
+        var online = this.onlinePlayers.values();
+        List<Player> result = new ArrayList<>(online.size());
+        result.addAll(online);
+        return Collections.unmodifiableList(result);
     }
 
     @Override
@@ -158,8 +161,8 @@ public class JungleServer implements Server {
 
         var result = new JSONArray();
         int sampleSize = getServerStatusPlayerSampleCount();
-        var players = new ArrayList<Player>();
-        if (players.size() <= sampleSize) {
+        var players = getOnlinePlayers();
+        if (sampleSize >= players.size()) {
             sampleSize = players.size();
         } else {
             for (int i = 0; i < sampleSize; i++) {
@@ -192,17 +195,28 @@ public class JungleServer implements Server {
         if (!session.isActive()) {
             return;
         }
-
         var player = new JunglePlayer(session, uuid, username, profile);
-
-        for (Map.Entry<String, JunglePlayer> e : this.onlinePlayers.entrySet()) {
+        for (Map.Entry<UUID, JunglePlayer> e : this.onlinePlayers.entrySet()) {
             if (e.getValue().getUuid().equals(uuid)) {
                 e.getValue().getSession().disconnect("You logged in from another location.");
                 break;
             }
         }
+        player.join(); // TODO: Events
 
-        player.join();
+        session.setPlayer(player, p -> {
+            log.info("{} disconnected", p.getUsername());
+            this.onlinePlayers.remove(p.getUuid());
+        });
         session.setOnline(true);
+
+        session.send(
+                LoginSuccessPacket.builder()
+                        .uuid(player.getUuid())
+                        .username(player.getUsername())
+                        .build()
+        );
+        player.getSession().setProtocol(Protocols.PLAY.getProtocol());
+        this.onlinePlayers.put(uuid, player);
     }
 }

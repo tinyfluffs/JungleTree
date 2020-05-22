@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import org.jungletree.api.Player;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.api.player.ProfileItem;
-import org.jungletree.entity.JungleEntityPlayer;
 import org.jungletree.net.Session;
 
 import java.util.Arrays;
@@ -14,7 +13,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Log4j2
-public class JunglePlayer extends JungleEntityPlayer implements Player, Comparable<JunglePlayer> {
+public class JunglePlayer implements Player, Comparable<JunglePlayer> {
 
     @Getter private final Session session;
     private final UUID uuid;

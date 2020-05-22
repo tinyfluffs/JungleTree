@@ -1,4 +1,4 @@
 package org.jungletree.api.entity;
 
-public interface EntityPlayer extends EntityLiving {
+public interface EntityPlayer extends EntityHuman {
 }

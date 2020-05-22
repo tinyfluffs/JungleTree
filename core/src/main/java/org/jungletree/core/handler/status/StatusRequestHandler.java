@@ -17,17 +17,17 @@ public class StatusRequestHandler implements Handler<StatusRequestPacket> {
     public void handle(Session session, StatusRequestPacket pkt) {
         // TODO: Bukkit style events
         // TODO: Backwards compatibility with older protocol versions (inject here)
-        
+
         var response = new JSONObject();
         response.put("version", server().getHighestSupportedGameVersion().toJson());
-        
+
         var players = new JSONObject();
         players.put("max", server().getMaxPlayers());
-        players.put("online", server().getOnlinePlayers().length);
+        players.put("online", server().getOnlinePlayers().size());
         players.put("sample", server().getServerListSample());
         response.put("players", players);
         response.put("description", ChatMessage.builder().text(server().getMotd()).build().toJson());
-        
+
         var favicon = server().getFavicon();
         if (favicon.length > 0) {
             response.put("favicon", "data:image/png;base64," + Base64.getEncoder().encodeToString(favicon));
