@@ -12,18 +12,22 @@ import org.jungletree.net.packet.login.EncryptionResponsePacket;
 import org.jungletree.net.packet.login.LoginStartPacket;
 import org.jungletree.net.packet.status.StatusPingPacket;
 import org.jungletree.net.packet.status.StatusRequestPacket;
-import org.jungletree.net.protocol.Protocols;
+
+import static org.jungletree.net.protocol.Protocols.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PacketHandlers {
 
     public static void registerAll() {
-        Protocols.HANDSHAKE.getProtocol().handler(HandshakePacket.class, HandshakeHandler.class);
+        var handshake = HANDSHAKE.getProtocol();
+        handshake.handler(HandshakePacket.class, HandshakeHandler.class);
 
-        Protocols.STATUS.getProtocol().handler(StatusPingPacket.class, StatusPingHandler.class);
-        Protocols.STATUS.getProtocol().handler(StatusRequestPacket.class, StatusRequestHandler.class);
+        var status = STATUS.getProtocol();
+        status.handler(StatusPingPacket.class, StatusPingHandler.class);
+        status.handler(StatusRequestPacket.class, StatusRequestHandler.class);
 
-        Protocols.LOGIN.getProtocol().handler(LoginStartPacket.class, LoginStartHandler.class);
-        Protocols.LOGIN.getProtocol().handler(EncryptionResponsePacket.class, EncryptionResponseHandler.class);
+        var login = LOGIN.getProtocol();
+        login.handler(LoginStartPacket.class, LoginStartHandler.class);
+        login.handler(EncryptionResponsePacket.class, EncryptionResponseHandler.class);
     }
 }

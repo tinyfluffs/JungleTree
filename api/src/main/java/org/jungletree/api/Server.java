@@ -3,8 +3,6 @@ package org.jungletree.api;
 import org.json.JSONArray;
 import org.jungletree.api.exception.StartupException;
 
-import java.security.PublicKey;
-
 public interface Server {
 
     void start() throws StartupException;
