@@ -14,6 +14,7 @@ import org.jungletree.net.exception.ChannelClosedException;
 import org.jungletree.net.http.HttpCallback;
 import org.jungletree.net.packet.DisconnectPacket;
 import org.jungletree.net.packet.Handler;
+import org.jungletree.net.packet.play.KeepAlivePacket;
 import org.jungletree.net.pipeline.CodecHandler;
 import org.jungletree.net.pipeline.EncryptionHandler;
 import org.jungletree.net.protocol.LoginProtocol;
@@ -34,9 +35,13 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import static org.jungletree.api.JungleTree.scheduler;
 
 @Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -57,6 +62,7 @@ public final class Session {
     @Getter byte[] verifyToken;
     @Getter Player player;
     Consumer<Player> callback;
+    ScheduledFuture keepAliveTask;
 
     public Session(NetworkServer networkServer, Channel channel) {
         this.networkServer = networkServer;
@@ -155,6 +161,9 @@ public final class Session {
 
     public void onDisconnect() {
         this.disconnected.set(true);
+        if (keepAliveTask != null) {
+            keepAliveTask.cancel(true);
+        }
         if (callback != null) {
             callback.accept(player);
         }
@@ -236,6 +245,16 @@ public final class Session {
         String url = String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8));
 
         ((LoginProtocol) this.getProtocol()).getHttpClient().connect(url, this.channel.eventLoop(), callback);
+    }
+
+    public void startKeepAlive() {
+        if (keepAliveTask != null) {
+            return;
+        }
+        keepAliveTask = scheduler("NETWORK").scheduleAtFixedRate(
+                () -> send(KeepAlivePacket.builder().id(System.currentTimeMillis()).build()),
+                0L, 1L, TimeUnit.SECONDS
+        );
     }
 
     @Override

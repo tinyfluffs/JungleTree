@@ -13,7 +13,6 @@ import org.jungletree.core.handler.PacketHandlers;
 import org.jungletree.net.NetworkServer;
 import org.jungletree.net.Session;
 import org.jungletree.net.packet.login.LoginSuccessPacket;
-import org.jungletree.net.packet.play.KeepAlivePacket;
 import org.jungletree.net.protocol.Protocols;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
@@ -221,10 +220,6 @@ public class JungleServer implements Server {
             this.onlinePlayers.remove(p.getUuid());
         });
 
-        session.send(
-                KeepAlivePacket.builder()
-                        .id(System.currentTimeMillis())
-                        .build()
-        );
+        session.startKeepAlive();
     }
 }
