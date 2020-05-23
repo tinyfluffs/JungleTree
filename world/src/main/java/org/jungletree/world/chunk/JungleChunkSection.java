@@ -47,8 +47,8 @@ public class JungleChunkSection implements ChunkSection {
     public void recalculateEmpty() {
         int count = 0;
         for (int x = 0; x < CHUNK_WIDTH; x++) {
-            for (int y = 0; x < CHUNK_WIDTH; y++) {
-                for (int z = 0; x < CHUNK_WIDTH; z++) {
+            for (int y = 0; y < CHUNK_WIDTH; y++) {
+                for (int z = 0; z < CHUNK_WIDTH; z++) {
                     if (getPaletteIdAt(x, y, z) != 0) {
                         count++;
                     }

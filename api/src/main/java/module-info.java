@@ -12,4 +12,6 @@ module org.jungletree.api {
     requires org.json;
 
     uses org.jungletree.api.Server;
+    uses org.jungletree.api.Scheduler;
+    uses org.jungletree.api.world.ChunkGenerator;
 }

@@ -1,11 +1,9 @@
 package org.jungletree.net.protocol;
 
-import io.netty.buffer.ByteBuf;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
-import org.jungletree.net.ByteBufUtils;
 import org.jungletree.net.Codec;
 import org.jungletree.net.Packet;
 import org.jungletree.net.exception.UnknownPacketException;
@@ -13,7 +11,6 @@ import org.jungletree.net.packet.Handler;
 import org.jungletree.net.service.CodecLookupService;
 import org.jungletree.net.service.HandlerLookupService;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 @Log4j2
@@ -64,6 +61,7 @@ public abstract class Protocol {
         }
         return handler;
     }
+
     public <M extends Packet> Codec.CodecRegistration getCodecRegistration(Class<M> clazz) {
         Codec.CodecRegistration reg = outboundCodecs.find(clazz);
         if (reg == null) {
@@ -72,8 +70,7 @@ public abstract class Protocol {
         return reg;
     }
 
-    public Codec<?> readHeader(ByteBuf in) throws UnknownPacketException, IOException {
-        int opcode = ByteBufUtils.readVarInt(in);
-        return inboundCodecs.find(opcode);
+    public Codec<?> find(int id) throws UnknownPacketException {
+        return inboundCodecs.find(id);
     }
 }

@@ -4,6 +4,7 @@ module org.jungletree.core {
     exports org.jungletree.core.handler.handshake to org.jungletree.net;
     exports org.jungletree.core.handler.status to org.jungletree.net;
     exports org.jungletree.core.handler.login to org.jungletree.net;
+    exports org.jungletree.core.handler.play to org.jungletree.net;
 
     provides org.jungletree.api.Server with org.jungletree.core.JungleServer;
 
@@ -17,4 +18,5 @@ module org.jungletree.core {
     requires tomlj;
     requires java.desktop;
     requires org.jungletree.entity;
+    requires org.jungletree.world;
 }

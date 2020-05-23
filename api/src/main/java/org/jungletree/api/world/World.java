@@ -18,9 +18,5 @@ public interface World {
 
     ChunkGenerator getGenerator();
 
-    Chunk getChunk(ChunkPos pos);
-
-    default Chunk getChunk(int chunkX, int chunkZ) {
-        return getChunk(new ChunkPos(chunkX, chunkZ));
-    }
+    Chunk getChunk(int chunkX, int chunkZ);
 }

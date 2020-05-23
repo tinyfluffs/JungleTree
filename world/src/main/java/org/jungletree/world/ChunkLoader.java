@@ -19,7 +19,8 @@ public class ChunkLoader {
         this.loaded = new ConcurrentSkipListMap<>();
     }
 
-    public JungleChunk getOrGenerate(ChunkPos pos) {
+    public JungleChunk getOrGenerate(int chunkX, int chunkZ) {
+        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
         if (loaded.containsKey(pos)) {
             return loaded.get(pos);
         } else {

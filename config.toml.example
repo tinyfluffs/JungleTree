@@ -6,7 +6,7 @@ host = "0.0.0.0"
 port = 25565
 max_players = 10
 icon = "favicon.png"
-encryption_key_size = 4096
+encryption_key_size = 1024
 
 [server.status]
 sample = 100

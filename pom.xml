@@ -17,6 +17,7 @@
         <module>world</module>
         <module>entity</module>
         <module>net</module>
+        <module>scheduler</module>
         <module>all</module>
     </modules>
 

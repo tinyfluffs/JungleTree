@@ -13,6 +13,7 @@ import org.jungletree.core.handler.PacketHandlers;
 import org.jungletree.net.NetworkServer;
 import org.jungletree.net.Session;
 import org.jungletree.net.packet.login.LoginSuccessPacket;
+import org.jungletree.net.packet.play.KeepAlivePacket;
 import org.jungletree.net.protocol.Protocols;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
@@ -79,7 +80,7 @@ public class JungleServer implements Server {
             this.port = Math.toIntExact(config.getLong("server.port", () -> 25565L));
             this.maxPlayers = Math.toIntExact(config.getLong("server.max_players", () -> 10L));
             this.useEncryption = config.getBoolean("server.encryption.enabled", () -> true);
-            this.keySize = Math.toIntExact(config.getLong("server.encryption.key_size", () -> 4096L));
+            this.keySize = Math.toIntExact(config.getLong("server.encryption.key_size", () -> 1024L));
             this.serverStatusPlayerSampleCount = Math.toIntExact(config.getLong("server.status.sample", () -> 10L));
 
             var favIconPath = Paths.get(config.getString("server.icon", () -> "favicon.png")).toFile();
@@ -203,11 +204,6 @@ public class JungleServer implements Server {
             }
         }
         player.join(); // TODO: Events
-
-        session.setPlayer(player, p -> {
-            log.info("{} disconnected", p.getUsername());
-            this.onlinePlayers.remove(p.getUuid());
-        });
         session.setOnline(true);
 
         session.send(
@@ -216,7 +212,19 @@ public class JungleServer implements Server {
                         .username(player.getUsername())
                         .build()
         );
-        player.getSession().setProtocol(Protocols.PLAY.getProtocol());
+
+        session.setProtocol(Protocols.PLAY.getProtocol());
         this.onlinePlayers.put(uuid, player);
+
+        session.setPlayer(player, p -> {
+            log.info("{} disconnected", p.getUsername());
+            this.onlinePlayers.remove(p.getUuid());
+        });
+
+        session.send(
+                KeepAlivePacket.builder()
+                        .id(System.currentTimeMillis())
+                        .build()
+        );
     }
 }

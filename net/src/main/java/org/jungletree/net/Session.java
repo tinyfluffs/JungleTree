@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 @Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public final class Session implements Comparable<Session> {
+public final class Session {
 
     private static final String SESSION_URL = "https://sessionserver.mojang.com/session/minecraft/hasJoined";
 
@@ -136,7 +136,6 @@ public final class Session implements Comparable<Session> {
     }
 
     public void disconnect() {
-        callback.accept(player);
         channel.flush();
         channel.close();
     }
@@ -147,7 +146,6 @@ public final class Session implements Comparable<Session> {
 
     public void disconnect(ChatMessage reason) {
         send(DisconnectPacket.builder().reason(reason).build());
-        callback.accept(player);
         channel.flush();
         channel.close();
     }
@@ -181,79 +179,63 @@ public final class Session implements Comparable<Session> {
         return token;
     }
 
-    public void enableEncryption(Session session, byte[] sharedSecret, byte[] encryptedVerifyToken, HttpCallback callback) {
+    public void enableEncryption(byte[] encodedSharedSecret, byte[] encodedVerifyToken, HttpCallback callback) {
         Cipher cipher;
-        var privateKey = networkServer.getPrivateKey();
-        var storedVerifyUsername = session.getVerifyUsername();
-        var storedVerifyToken = session.getVerifyToken();
+        var privateKey = this.networkServer.getPrivateKey();
+        var storedVerifyUsername = this.verifyUsername;
 
-        SecretKey sharedKey;
+        SecretKey sharedSecret;
         try {
             cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-            sharedKey = new SecretKeySpec(cipher.doFinal(sharedSecret), "AES");
+            sharedSecret = new SecretKeySpec(cipher.doFinal(encodedSharedSecret), "AES");
         } catch (Exception ex) {
-            log.warn("Failed to enable encryption cipher for client: ", ex);
-            session.disconnect();
+            log.warn("Failed to init shared secret:", ex);
+            disconnect("Failed to init shared secret");
             return;
         }
 
         byte[] verifyToken;
         try {
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            verifyToken = cipher.doFinal(encryptedVerifyToken);
+            verifyToken = cipher.doFinal(encodedVerifyToken);
         } catch (Exception ex) {
             log.warn("Bad key for client: username={}", storedVerifyUsername, ex);
-            session.disconnect();
+            disconnect("Bad key");
             return;
         }
 
-        if (!Arrays.equals(verifyToken, storedVerifyToken)) {
+        if (!Arrays.equals(verifyToken, this.verifyToken)) {
             log.warn("Bad token for client: username={}", storedVerifyUsername);
-            session.disconnect();
+            disconnect("Bad token");
             return;
         }
 
         try {
-            session.updatePipeline("encryption", new EncryptionHandler(sharedKey));
+            updatePipeline("encryption", new EncryptionHandler(sharedSecret));
         } catch (GeneralSecurityException ex) {
             log.error(ex);
-            session.disconnect();
-            return;
+            disconnect("Server security error.");
         }
 
         String hash;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            digest.update(session.getSessionId().getBytes());
-            digest.update(sharedKey.getEncoded());
-            digest.update(networkServer.getPublicKey().getEncoded());
+            digest.update(this.sessionId.getBytes());
+            digest.update(sharedSecret.getEncoded());
+            digest.update(this.networkServer.getPublicKey().getEncoded());
 
             hash = new BigInteger(digest.digest()).toString(16);
         } catch (NoSuchAlgorithmException ex) {
             log.error(ex);
-            session.disconnect();
+            disconnect("Hash failure");
             return;
         }
 
-        String url = String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(session.getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8));
-        if (!(session.getProtocol() instanceof LoginProtocol)) {
-            session.disconnect();
-            log.warn("Login protocol not used when we haven't finished validation");
-            return;
-        }
+        String url = String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8));
 
-        ((LoginProtocol) session.getProtocol()).getHttpClient().connect(url, session.getChannel().eventLoop(), callback);
-    }
-
-    @Override
-    public int compareTo(Session o) {
-        if (o == null) {
-            return -1;
-        }
-        // Natural sort
-        return sessionId.compareTo(o.sessionId);
+        ((LoginProtocol) this.getProtocol()).getHttpClient().connect(url, this.channel.eventLoop(), callback);
     }
 
     @Override

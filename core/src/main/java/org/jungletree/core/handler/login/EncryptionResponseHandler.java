@@ -1,11 +1,12 @@
 package org.jungletree.core.handler.login;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jungletree.api.player.ProfileItem;
 import org.jungletree.api.util.UUIDs;
 import org.jungletree.core.JungleServer;
-import org.jungletree.api.player.ProfileItem;
 import org.jungletree.net.Session;
 import org.jungletree.net.http.HttpCallback;
 import org.jungletree.net.packet.Handler;
@@ -15,11 +16,12 @@ import java.util.UUID;
 
 import static org.jungletree.api.JungleTree.server;
 
+@Log4j2
 public class EncryptionResponseHandler implements Handler<EncryptionResponsePacket> {
 
     @Override
     public void handle(Session session, EncryptionResponsePacket pkt) {
-        session.enableEncryption(session, pkt.getSharedSecret(), pkt.getVerifyToken(), new ClientAuthCallback(session));
+        session.enableEncryption(pkt.getSharedSecret(), pkt.getVerifyToken(), new ClientAuthCallback(session));
     }
 
     @AllArgsConstructor

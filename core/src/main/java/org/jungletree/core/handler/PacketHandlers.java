@@ -5,11 +5,13 @@ import lombok.NoArgsConstructor;
 import org.jungletree.core.handler.handshake.HandshakeHandler;
 import org.jungletree.core.handler.login.EncryptionResponseHandler;
 import org.jungletree.core.handler.login.LoginStartHandler;
+import org.jungletree.core.handler.play.KeepAliveHandler;
 import org.jungletree.core.handler.status.StatusPingHandler;
 import org.jungletree.core.handler.status.StatusRequestHandler;
 import org.jungletree.net.packet.handshake.HandshakePacket;
 import org.jungletree.net.packet.login.EncryptionResponsePacket;
 import org.jungletree.net.packet.login.LoginStartPacket;
+import org.jungletree.net.packet.play.KeepAlivePacket;
 import org.jungletree.net.packet.status.StatusPingPacket;
 import org.jungletree.net.packet.status.StatusRequestPacket;
 
@@ -29,5 +31,8 @@ public final class PacketHandlers {
         var login = LOGIN.getProtocol();
         login.handler(LoginStartPacket.class, LoginStartHandler.class);
         login.handler(EncryptionResponsePacket.class, EncryptionResponseHandler.class);
+
+        var play = PLAY.getProtocol();
+        play.handler(KeepAlivePacket.class, KeepAliveHandler.class);
     }
 }
