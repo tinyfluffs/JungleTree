@@ -1,5 +1,6 @@
 module org.jungletree.world {
     exports org.jungletree.world.chunk to org.jungletree.net;
+    exports org.jungletree.world;
 
     requires static lombok;
 

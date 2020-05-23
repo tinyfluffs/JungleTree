@@ -5,6 +5,7 @@ module org.jungletree.net {
     exports org.jungletree.net.packet.status to org.jungletree.core;
     exports org.jungletree.net.packet.handshake to org.jungletree.core;
     exports org.jungletree.net.packet.login to org.jungletree.core;
+    exports org.jungletree.net.packet.play to org.jungletree.core;
     exports org.jungletree.net.protocol to org.jungletree.core;
     exports org.jungletree.net.exception to org.jungletree.core;
     exports org.jungletree.net.pipeline to org.jungletree.core;

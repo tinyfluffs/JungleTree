@@ -25,6 +25,16 @@ public final class JungleTree {
         return globalPalette;
     }
 
+    public static Scheduler scheduler(String name) {
+        name = name.toUpperCase();
+        for (Scheduler sch : serviceLoader(Scheduler.class)) {
+            if (sch.getName().equals(name)) {
+                return sch;
+            }
+        }
+        throw new NoSuchElementException("No chunk generator with the provided name " + name);
+    }
+
     public static ChunkGenerator generator(String name) {
         name = name.toUpperCase();
         for (ChunkGenerator gen : serviceLoader(ChunkGenerator.class)) {

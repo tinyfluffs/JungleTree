@@ -7,6 +7,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.api.exception.StartupException;
 
 import java.net.SocketAddress;
@@ -16,6 +17,7 @@ import java.security.spec.X509EncodedKeySpec;
 
 import static org.jungletree.api.JungleTree.server;
 
+@Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NetworkServer {
 
@@ -80,13 +82,14 @@ public class NetworkServer {
     }
 
     public void onBindFailure(SocketAddress address, Throwable t) {
+        log.error(t);
     }
 
     public PublicKey getPublicKey() {
         return keyPair.getPublic();
     }
 
-    protected PrivateKey getPrivateKey() {
+    PrivateKey getPrivateKey() {
         return keyPair.getPrivate();
     }
 

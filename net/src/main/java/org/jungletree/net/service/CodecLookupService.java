@@ -3,6 +3,7 @@ package org.jungletree.net.service;
 import lombok.AccessLevel;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.Codec;
 import org.jungletree.net.Packet;
 import org.jungletree.net.exception.UnknownPacketException;
@@ -11,8 +12,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
+@Log4j2
 @ToString
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CodecLookupService {
@@ -20,7 +21,6 @@ public class CodecLookupService {
     ConcurrentMap<Class<? extends Packet>, Codec.CodecRegistration> messages;
     ConcurrentMap<Integer, Codec<? extends Packet>> opcodes;
     Codec<? extends Packet>[] opcodeTable;
-    AtomicInteger nextId;
 
     public CodecLookupService(int size) {
         if (size < 0) {
@@ -34,7 +34,6 @@ public class CodecLookupService {
             opcodeTable = new Codec[size];
             opcodes = null;
         }
-        nextId = new AtomicInteger(0);
     }
 
     public <M extends Packet, C extends Codec<M>> Codec.CodecRegistration bind(Class<M> messageClazz, Class<C> codecClazz, int opcode) throws InstantiationException {
@@ -50,19 +49,10 @@ public class CodecLookupService {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
             throw new IllegalArgumentException("Codec could not be created!", ex);
         }
+
         if (opcode < 0) {
             throw new IllegalArgumentException("Opcode must either be null or greater than or equal to 0!");
         }
-
-        int id;
-        try {
-            do {
-                id = nextId.getAndIncrement();
-            } while (get(id) != null);
-        } catch (IndexOutOfBoundsException ioobe) {
-            throw new IllegalStateException("Ran out of Ids!", ioobe);
-        }
-        opcode = id;
 
         Codec<?> previous = get(opcode);
         if (previous != null && previous.getClass() != codecClazz) {
@@ -98,10 +88,12 @@ public class CodecLookupService {
         try {
             Codec<?> c = get(id);
             if (c == null) {
-                throw new NullPointerException();
+                log.error("No codec for packet 0x{}", Integer.toHexString(id));
+                throw new UnknownPacketException(id);
             }
             return c;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
+            log.error("No codec for packet 0x{} (OOB)", Integer.toHexString(id));
             throw new UnknownPacketException(id);
         }
     }

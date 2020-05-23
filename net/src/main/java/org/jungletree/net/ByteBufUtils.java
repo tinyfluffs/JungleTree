@@ -115,12 +115,12 @@ public final class ByteBufUtils {
         buf.writeLong(value.getLeastSignificantBits());
     }
 
-    public static void writeChunk(ByteBuf buf, JungleChunk chunk, boolean fullChunk) {
+    public static void writeChunk(ByteBuf buf, JungleChunk chunk, boolean fullChunk, int filter) {
         JungleChunkSection[] sections = chunk.getSections();
         List<JungleChunkSection> usedSections = new ArrayList<>();
         int avail = 0;
         for (int i = 0; i < sections.length; i++) {
-            if (sections[i] != null && !(fullChunk && sections[i].isEmpty())) {
+            if (sections[i] != null && !(fullChunk && sections[i].isEmpty()) && (filter & (1 << i)) != 0) {
                 avail |= 1 << i;
                 usedSections.add(sections[i]);
             }
