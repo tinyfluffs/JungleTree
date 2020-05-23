@@ -9,12 +9,12 @@ import java.util.Arrays;
 @ToString
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public final class Material {
+public final class BlockState {
 
     @Getter String name;
     MaterialProperty<? extends Serializable>[] properties;
 
-    public Material(@NonNull String name, MaterialProperty... properties) {
+    public BlockState(@NonNull String name, MaterialProperty... properties) {
         this.name = name;
         this.properties = properties;
     }

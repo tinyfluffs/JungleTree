@@ -82,6 +82,7 @@ public final class Session {
     }
 
     public void send(Packet pkt) throws ChannelClosedException {
+        log.info("OUT: {}", pkt);
         sendFuture(pkt);
     }
 
@@ -173,11 +174,11 @@ public final class Session {
     }
 
     public void onInboundThrowable(Throwable cause) {
-        log.error(cause);
+        log.error("", cause);
     }
 
     public void onOutboundThrowable(Throwable cause) {
-        log.error(cause);
+        log.error("", cause);
     }
 
     public <T extends Packet> void onHandlerThrowable(T pkt, Handler<T> handler, Throwable cause) {
@@ -227,7 +228,7 @@ public final class Session {
         try {
             updatePipeline("encryption", new EncryptionHandler(sharedSecret));
         } catch (GeneralSecurityException ex) {
-            log.error(ex);
+            log.error("", ex);
             disconnect("Server security error.");
         }
 
@@ -240,7 +241,7 @@ public final class Session {
 
             hash = new BigInteger(digest.digest()).toString(16);
         } catch (NoSuchAlgorithmException ex) {
-            log.error(ex);
+            log.error("", ex);
             disconnect("Hash failure");
             return;
         }

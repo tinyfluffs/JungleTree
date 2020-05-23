@@ -15,13 +15,12 @@ public class CheckerboardChunkGenerator implements ChunkGenerator {
     public void generate(Chunk c, ChunkPos pos) {
         ChunkSection floorSection = c.getSection(0);
         Palette palette = globalPalette();
-        char paletteId = palette.getId(palette.fromName("minecraft:stone"));
+        char paletteId = palette.getState(palette.fromName("minecraft:stone"));
 
-        for (int x=0; x<World.CHUNK_WIDTH; x++) {
-            for (int z=0; z<World.CHUNK_WIDTH; z++) {
-                floorSection.setPaletteIdAt(x, 0, z, paletteId);
+        for (int x=0; x<World.CHUNK_SECTION_WIDTH; x++) {
+            for (int z=0; z<World.CHUNK_SECTION_DEPTH; z++) {
+                floorSection.setBlockAt(x, 0, z, paletteId);
             }
         }
-        floorSection.recalculateEmpty();
     }
 }

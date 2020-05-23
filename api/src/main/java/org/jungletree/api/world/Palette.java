@@ -4,37 +4,39 @@ import java.util.*;
 
 public final class Palette {
 
+    public static final int GLOBAL_PALETTE_BITS_PER_BLOCK = 14;
+
     private static final String DEFAULT_PREFIX = "minecraft:";
     private static final String DEFAULT_MATERIAL_NAME = DEFAULT_PREFIX + "air";
-    private static final Material DEFAULT_MATERIAL = new Material(DEFAULT_MATERIAL_NAME);
+    private static final BlockState DEFAULT_BLOCK_STATE = new BlockState(DEFAULT_MATERIAL_NAME);
 
-    private final Map<Character, Material> materials;
+    private final Map<Character, BlockState> materials;
 
-    public Palette(Material... m) {
+    public Palette(BlockState... m) {
         int pos = 0;
         this.materials = new TreeMap<>();
-        this.materials.put((char) pos++, DEFAULT_MATERIAL);
-        for (Material material : m) {
-            this.materials.put((char) pos++, material);
+        this.materials.put((char) pos++, DEFAULT_BLOCK_STATE);
+        for (BlockState blockState : m) {
+            this.materials.put((char) pos++, blockState);
         }
     }
 
-    public char getId(Material material) {
-        for (Map.Entry<Character, Material> e : materials.entrySet()) {
-            if (e.getValue().equals(material)) {
+    public char getState(BlockState blockState) {
+        for (Map.Entry<Character, BlockState> e : materials.entrySet()) {
+            if (e.getValue().equals(blockState)) {
                 return e.getKey();
             }
         }
         return 0;
     }
 
-    public Material fromId(char id) {
-        return materials.getOrDefault(id, DEFAULT_MATERIAL);
+    public BlockState fromId(char id) {
+        return materials.getOrDefault(id, DEFAULT_BLOCK_STATE);
     }
 
-    public Material fromName(String name) {
+    public BlockState fromName(String name) {
         name = name.toLowerCase();
-        for (Material m : materials.values()) {
+        for (BlockState m : materials.values()) {
             if (m.getName().equals(name)) {
                 return m;
             }

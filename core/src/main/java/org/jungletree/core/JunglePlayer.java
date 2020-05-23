@@ -2,10 +2,14 @@ package org.jungletree.core;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.jungletree.api.JungleTree;
 import org.jungletree.api.Player;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.api.player.ProfileItem;
 import org.jungletree.net.Session;
+import org.jungletree.net.packet.play.ChunkDataPacket;
+import org.jungletree.net.packet.play.PluginDataPacket;
+import org.jungletree.world.JungleWorld;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -67,8 +71,26 @@ public class JunglePlayer implements Player, Comparable<JunglePlayer> {
         return session.isOnline();
     }
 
-    public void join() {
+    public void onPreJoin() {
+    }
+
+    public void onJoin() {
         log.info("{} joined the game", username);
+        session.send(PluginDataPacket.builder()
+                .channel("minecraft:brand")
+                .data(session.getNetworkServer().getBrandData())
+                .build()
+        );
+
+        JungleWorld world = new JungleWorld(UUID.randomUUID(), "world", 0, 256, JungleTree.generator("CHECKERBOARD"));
+
+        session.send(ChunkDataPacket.builder()
+                .chunkX(0)
+                .chunkZ(0)
+                .fullChunk(true)
+                .chunk(world.getChunk(0, 0))
+                .build()
+        );
     }
 
     @Override
