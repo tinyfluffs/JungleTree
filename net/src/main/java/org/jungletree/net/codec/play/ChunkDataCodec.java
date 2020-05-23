@@ -2,18 +2,22 @@ package org.jungletree.net.codec.play;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.jungletree.api.nbt.Tag;
 import org.jungletree.api.world.Palette;
 import org.jungletree.net.Codec;
 import org.jungletree.net.packet.play.ChunkDataPacket;
 import org.jungletree.world.chunk.JungleChunk;
 import org.jungletree.world.chunk.JungleChunkSection;
 
+import java.io.IOException;
+
+import static org.jungletree.net.ByteBufUtils.writeTag;
 import static org.jungletree.net.ByteBufUtils.writeVarInt;
 
 public class ChunkDataCodec implements Codec<ChunkDataPacket> {
 
     @Override
-    public ByteBuf encode(ByteBuf buf, ChunkDataPacket p) {
+    public ByteBuf encode(ByteBuf buf, ChunkDataPacket p) throws IOException {
         JungleChunk chunk = (JungleChunk) p.getChunk();
         JungleChunkSection[] sections = chunk.getSections();
         boolean fullChunk = p.isFullChunk();
@@ -25,6 +29,8 @@ public class ChunkDataCodec implements Codec<ChunkDataPacket> {
 
         int primaryBitMask = getPrimaryBitMask(buf, fullChunk, sections);
         writeVarInt(buf, primaryBitMask);
+
+        writeTag(buf, chunk.getHeightMaps());
 
         if (fullChunk) {
             buf.writeBytes(chunk.getBiomes());
@@ -44,7 +50,11 @@ public class ChunkDataCodec implements Codec<ChunkDataPacket> {
             chunkBuf.release();
         }
 
-        writeVarInt(buf, 0); // TODO: Block entities
+        Tag[] tileEntities = chunk.getTileEntities();
+        writeVarInt(buf, tileEntities.length);
+        for (Tag tileEntity : tileEntities) {
+            writeTag(buf, tileEntity);
+        }
         return buf;
     }
 
