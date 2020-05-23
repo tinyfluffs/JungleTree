@@ -125,6 +125,11 @@ public class JungleServer implements Server {
     }
 
     @Override
+    public String getImplementationName() {
+        return "JungleTree";
+    }
+
+    @Override
     public String getImplementationVersion() {
         return Versioning.getImplementationVersion();
     }
@@ -202,7 +207,7 @@ public class JungleServer implements Server {
                 break;
             }
         }
-        player.join(); // TODO: Events
+        player.onPreJoin(); // TODO: Events
         session.setOnline(true);
 
         session.send(
@@ -220,6 +225,7 @@ public class JungleServer implements Server {
             this.onlinePlayers.remove(p.getUuid());
         });
 
+        player.onJoin();
         session.startKeepAlive();
     }
 }

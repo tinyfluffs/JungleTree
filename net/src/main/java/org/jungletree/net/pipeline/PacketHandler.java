@@ -50,7 +50,7 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         var s = session.get();
         if (s == null) {
-            log.error(cause);
+            log.error("", cause);
         } else {
             s.onInboundThrowable(cause);
         }

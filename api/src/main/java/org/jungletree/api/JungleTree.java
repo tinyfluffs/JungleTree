@@ -3,7 +3,7 @@ package org.jungletree.api;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jungletree.api.world.ChunkGenerator;
-import org.jungletree.api.world.Material;
+import org.jungletree.api.world.BlockState;
 import org.jungletree.api.world.Palette;
 
 import java.util.Map;
@@ -65,10 +65,10 @@ public final class JungleTree {
     private static Palette createGlobalPalette() {
         var p = "minecraft:";
         return new Palette(
-                new Material(p + "stone"),
-                new Material(p + "dirt"),
-                new Material(p + "grass"),
-                new Material(p + "glass")
+                new BlockState(p + "stone"),
+                new BlockState(p + "dirt"),
+                new BlockState(p + "grass"),
+                new BlockState(p + "glass")
         );
     }
 }

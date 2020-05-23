@@ -1,18 +1,28 @@
 package org.jungletree.world.chunk;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.jungletree.api.world.Chunk;
 import org.jungletree.api.world.ChunkSection;
 
-import static org.jungletree.api.world.World.CHUNK_WIDTH;
+import static org.jungletree.api.world.World.CHUNK_SECTION_HEIGHT;
+import static org.jungletree.api.world.World.CHUNK_SECTION_WIDTH;
 
+@ToString
 public class JungleChunk implements Chunk {
 
+    @Getter private final byte[] biomes;
+    @Getter private final byte[] heightMap;
     @Getter private final JungleChunkSection[] sections;
-    @Getter private final byte[] biomes = new byte[CHUNK_WIDTH * CHUNK_WIDTH];
 
     public JungleChunk(int height) {
-        this.sections = new JungleChunkSection[height / CHUNK_WIDTH + ((height % CHUNK_WIDTH == 0) ? 0 : 1)];
+        this.biomes = new byte[CHUNK_SECTION_WIDTH * CHUNK_SECTION_HEIGHT];
+        this.heightMap = new byte[CHUNK_SECTION_WIDTH * CHUNK_SECTION_HEIGHT];
+        this.sections = new JungleChunkSection[height / CHUNK_SECTION_HEIGHT + ((height % CHUNK_SECTION_HEIGHT == 0) ? 0 : 1)];
+
+        for (int i=0; i<sections.length; i++) {
+            this.sections[i] = new JungleChunkSection();
+        }
     }
 
     @Override

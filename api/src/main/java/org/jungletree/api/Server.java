@@ -27,6 +27,8 @@ public interface Server {
 
     String getApiVersion();
 
+    String getImplementationName();
+
     String getImplementationVersion();
 
     GameVersion getHighestSupportedGameVersion();

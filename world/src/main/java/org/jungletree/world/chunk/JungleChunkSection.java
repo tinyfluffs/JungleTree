@@ -6,27 +6,27 @@ import org.jungletree.api.world.ChunkSection;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.jungletree.api.world.World.CHUNK_SECTION_SIZE;
-import static org.jungletree.api.world.World.CHUNK_WIDTH;
+import static org.jungletree.api.world.World.*;
 
 public class JungleChunkSection implements ChunkSection {
 
-    @Getter private final char[] blocks;
+    @Getter private final long[] blocks;
     private final AtomicInteger lazyBlockCount;
 
     public JungleChunkSection() {
-        this.blocks = new char[CHUNK_SECTION_SIZE];
+        this.blocks = new long[CHUNK_SECTION_SIZE];
         this.lazyBlockCount = new AtomicInteger(0);
+        recalculateEmpty();
     }
 
     @Override
-    public char getPaletteIdAt(int x, int y, int z) {
+    public long getBlockAt(int x, int y, int z) {
         return blocks[(y << 8) | (z << 4) | x];
     }
 
     @Override
-    public void setPaletteIdAt(int x, int y, int z, char paletteId) {
-        blocks[(y << 8) | (z << 4) | x] = paletteId;
+    public void setBlockAt(int x, int y, int z, long state) {
+        blocks[(y << 8) | (z << 4) | x] = state;
     }
 
     @Override
@@ -35,8 +35,8 @@ public class JungleChunkSection implements ChunkSection {
     }
 
     @Override
-    public void fill(char paletteId) {
-        Arrays.fill(this.blocks, paletteId);
+    public void fill(long state) {
+        Arrays.fill(this.blocks, state);
     }
 
     public short getLazyBlockCount() {
@@ -46,10 +46,10 @@ public class JungleChunkSection implements ChunkSection {
     @Override
     public void recalculateEmpty() {
         int count = 0;
-        for (int x = 0; x < CHUNK_WIDTH; x++) {
-            for (int y = 0; y < CHUNK_WIDTH; y++) {
-                for (int z = 0; z < CHUNK_WIDTH; z++) {
-                    if (getPaletteIdAt(x, y, z) != 0) {
+        for (int x = 0; x < CHUNK_SECTION_WIDTH; x++) {
+            for (int y = 0; y < CHUNK_SECTION_HEIGHT; y++) {
+                for (int z = 0; z < CHUNK_SECTION_DEPTH; z++) {
+                    if (getBlockAt(x, y, z) != 0) {
                         count++;
                     }
                 }

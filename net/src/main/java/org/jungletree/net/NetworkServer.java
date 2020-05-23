@@ -1,6 +1,8 @@
 package org.jungletree.net;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -8,12 +10,12 @@ import io.netty.channel.EventLoopGroup;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
+import org.jungletree.api.JungleTree;
 import org.jungletree.api.exception.StartupException;
 
 import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 import static org.jungletree.api.JungleTree.server;
 
@@ -24,18 +26,12 @@ public class NetworkServer {
     final ServerBootstrap bootstrap = new ServerBootstrap();
     final EventLoopGroup boss = NettyUtils.createBestEventLoopGroup();
     final EventLoopGroup worker = NettyUtils.createBestEventLoopGroup();
+    final KeyPair keyPair;
 
-    KeyPair keyPair;
     Channel channel;
 
     public NetworkServer() throws StartupException {
-        try {
-            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
-            gen.initialize(server().getEncryptionKeySize());
-            this.keyPair = gen.generateKeyPair();
-        } catch (NoSuchAlgorithmException ex) {
-            throw new StartupException("RSA unavailable: ", ex);
-        }
+        this.keyPair = generateKeyPair();
 
         bootstrap.group(boss, worker)
                 .channel(NettyUtils.bestServerSocketChannel())
@@ -81,8 +77,18 @@ public class NetworkServer {
     public void onBindSuccess(SocketAddress address) {
     }
 
-    public void onBindFailure(SocketAddress address, Throwable t) {
-        log.error(t);
+    public void onBindFailure(SocketAddress address, Throwable cause) {
+        log.error("", cause);
+    }
+
+    private KeyPair generateKeyPair() throws StartupException {
+        try {
+            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+            gen.initialize(server().getEncryptionKeySize());
+            return gen.generateKeyPair();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new StartupException("RSA unavailable: ", ex);
+        }
     }
 
     public PublicKey getPublicKey() {
@@ -93,14 +99,14 @@ public class NetworkServer {
         return keyPair.getPrivate();
     }
 
-    // TODO: Find a new home
-    private Key genKey(Key base) {
-        try {
-            X509EncodedKeySpec ks = new X509EncodedKeySpec(base.getEncoded());
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            return kf.generatePublic(ks);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException ex) {
-            throw new RuntimeException(ex);
-        }
+    public byte[] getBrandData() {
+        ByteBuf buf = Unpooled.buffer(0);
+        var brand = JungleTree.server().getImplementationName().getBytes(StandardCharsets.UTF_8);
+        ByteBufUtils.writeVarInt(buf, brand.length);
+        buf.writeBytes(brand);
+        var result = new byte[buf.readableBytes()];
+        buf.readBytes(result);
+        buf.release();
+        return result;
     }
 }

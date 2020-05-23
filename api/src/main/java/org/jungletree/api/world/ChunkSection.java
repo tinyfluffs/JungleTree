@@ -12,9 +12,9 @@ public interface ChunkSection {
      * @param z index inside the section
      * @return palette id of the block at the given coords
      */
-    char getPaletteIdAt(int x, int y, int z);
+    long getBlockAt(int x, int y, int z);
 
-    void setPaletteIdAt(int x, int y, int z, char paletteId);
+    void setBlockAt(int x, int y, int z, long state);
 
     boolean isEmpty();
 
@@ -23,11 +23,11 @@ public interface ChunkSection {
     /**
      * Fill the section with the given palette element
      *
-     * @param paletteId palette id to fill with
+     * @param state palette id to fill with
      */
-    void fill(char paletteId);
+    void fill(long state);
 
-    default void fill(Material material) {
-        fill(globalPalette().getId(material));
+    default void fill(BlockState blockState) {
+        fill(globalPalette().getState(blockState));
     }
 }
