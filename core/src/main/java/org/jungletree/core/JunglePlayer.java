@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class JunglePlayer implements Player, Comparable<JunglePlayer> {
@@ -66,6 +67,19 @@ public class JunglePlayer implements Player, Comparable<JunglePlayer> {
         return session.isOnline();
     }
 
+    public void join() {
+        log.info("{} joined the game", username);
+    }
+
+    @Override
+    public long getPingRTT(TimeUnit unit) {
+        var ns = session.getLastPongNs() - session.getLastPingNs();
+        if (unit == null) {
+            return ns;
+        }
+        return unit.convert(ns, TimeUnit.NANOSECONDS);
+    }
+
     @Override
     public int compareTo(JunglePlayer o) {
         if (o == null) {
@@ -94,9 +108,5 @@ public class JunglePlayer implements Player, Comparable<JunglePlayer> {
                 .add("uuid=" + uuid)
                 .add("username='" + username + "'")
                 .toString();
-    }
-
-    public void join() {
-        log.info("{} joined the game", username);
     }
 }

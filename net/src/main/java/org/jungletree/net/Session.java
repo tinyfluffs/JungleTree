@@ -39,6 +39,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static org.jungletree.api.JungleTree.scheduler;
@@ -53,6 +54,8 @@ public final class Session {
 
     final AtomicBoolean online = new AtomicBoolean();
     final AtomicBoolean disconnected = new AtomicBoolean();
+    final AtomicLong lastPing = new AtomicLong();
+    final AtomicLong lastPong = new AtomicLong();
 
     @Getter final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
     @Getter final NetworkServer networkServer;
@@ -251,10 +254,23 @@ public final class Session {
         if (keepAliveTask != null) {
             return;
         }
-        keepAliveTask = scheduler("NETWORK").scheduleAtFixedRate(
-                () -> send(KeepAlivePacket.builder().id(System.currentTimeMillis()).build()),
-                0L, 1L, TimeUnit.SECONDS
-        );
+        keepAliveTask = scheduler("NETWORK").scheduleAtFixedRate(() -> {
+            final long time = System.nanoTime();
+            this.lastPing.set(time);
+            send(KeepAlivePacket.builder().id(time).build());
+        }, 0L, 1L, TimeUnit.SECONDS);
+    }
+
+    public long getLastPingNs() {
+        return this.lastPing.get();
+    }
+
+    public long getLastPongNs() {
+        return this.lastPong.get();
+    }
+
+    public void setLastPongNs(long ns) {
+        this.lastPong.set(ns);
     }
 
     @Override

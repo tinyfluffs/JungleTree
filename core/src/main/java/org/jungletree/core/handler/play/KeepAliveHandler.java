@@ -10,6 +10,6 @@ public class KeepAliveHandler implements Handler<KeepAlivePacket> {
 
     @Override
     public void handle(Session session, KeepAlivePacket pkt) {
-        log.info("Inbound: {}", pkt);
+        session.setLastPongNs(System.nanoTime());
     }
 }
