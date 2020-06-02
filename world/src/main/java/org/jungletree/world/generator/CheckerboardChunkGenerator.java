@@ -12,7 +12,7 @@ public class CheckerboardChunkGenerator implements ChunkGenerator {
     }
 
     @Override
-    public void generate(Chunk c, ChunkPos pos) {
+    public void generate(Chunk c, int cx, int cz) {
         ChunkSection floorSection = c.getSection(0);
         Palette palette = globalPalette();
         char paletteId = palette.getState(palette.fromName("minecraft:stone"));

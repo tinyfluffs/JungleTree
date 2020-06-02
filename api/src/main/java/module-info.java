@@ -7,10 +7,12 @@ module org.jungletree.api {
     exports org.jungletree.api.player;
     exports org.jungletree.api.util;
     exports org.jungletree.api.world;
+    exports org.jungletree.api.world.biome;
 
     requires static lombok;
 
     requires org.json;
+    requires java.desktop;
 
     uses org.jungletree.api.Server;
     uses org.jungletree.api.Scheduler;

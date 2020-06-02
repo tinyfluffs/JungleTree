@@ -4,5 +4,5 @@ public interface ChunkGenerator {
 
     String getName();
 
-    void generate(Chunk chunk, ChunkPos pos);
+    void generate(Chunk chunk, int cx, int cz);
 }
