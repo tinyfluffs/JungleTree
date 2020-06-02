@@ -2,10 +2,16 @@ package org.jungletree.net;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
 import org.jungletree.api.chat.ChatMessage;
+import org.jungletree.api.nbt.CompoundTag;
+import org.jungletree.api.nbt.NBTInputStream;
+import org.jungletree.api.nbt.NBTOutputStream;
+import org.jungletree.api.nbt.TagType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -217,6 +223,34 @@ public class FriendlyByteBuf extends ByteBuf {
 
     public void writeChatMessage(ChatMessage value) {
         writeString(value.toJson().toString());
+    }
+
+    public CompoundTag readNbt() {
+        int index = this.readerIndex();
+        byte nextTag = this.readByte();
+        if (nextTag == TagType.TAG_END.getId()) {
+            return null;
+        } else {
+            this.readerIndex(index);
+
+            try {
+                return (CompoundTag) new NBTInputStream(new ByteBufInputStream(this)).readTag();
+            } catch (IOException ex) {
+                throw new DecoderException(ex);
+            }
+        }
+    }
+
+    public void writeNbt(CompoundTag tag) {
+        if (tag == null) {
+            this.writeByte(TagType.TAG_END.getId());
+        } else {
+            try {
+                new NBTOutputStream(new ByteBufOutputStream(this)).writeTag(tag);
+            } catch (IOException ex) {
+                throw new EncoderException(ex);
+            }
+        }
     }
 
     public int capacity() {
