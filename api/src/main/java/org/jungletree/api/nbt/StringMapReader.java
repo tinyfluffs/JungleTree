@@ -23,36 +23,36 @@
  */
 package org.jungletree.api.nbt;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
-@Getter
-@Setter
-public final class StringTag extends NamedTag<String> {
+public final class StringMapReader {
 
-    private String value;
+    private StringMapReader() {}
 
-    public StringTag(String name, String value) {
-        super(name);
-        this.value = value;
-    }
+    public static List<Tag<?>> readFile(File f) {
+        List<Tag<?>> list = new ArrayList<>();
 
-    @Override
-    public TagType getType() {
-        return TagType.TAG_STRING;
-    }
-
-    @Override
-    public String toString() {
-        String name = getName();
-        String append = "";
-        if (name != null && !name.equals("")) {
-            append = "(\"" + this.getName() + "\")";
+        try {
+            FileInputStream fis = new FileInputStream(f);
+            DataInputStream dis = new DataInputStream(fis);
+            boolean eof = false;
+            while (!eof) {
+                int value;
+                String key;
+                try {
+                    value = dis.readInt();
+                } catch (EOFException e) {
+                    eof = true;
+                    continue;
+                }
+                key = dis.readUTF();
+                list.add(new IntTag(key, value));
+            }
+            return list;
+        } catch (IOException ioe) {
+            return null;
         }
-        return "TAG_String" + append + ": " + value;
-    }
-
-    public StringTag clone() {
-        return new StringTag(getName(), value);
     }
 }
