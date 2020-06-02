@@ -1,10 +1,18 @@
 package org.jungletree.net.packet.status;
 
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
+import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 
-@Value
-@Builder
+@Data
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
 public class StatusRequestPacket implements Packet {
+
+    @Override
+    public void encode(FriendlyByteBuf buf) {}
+
+    @Override
+    public void decode(FriendlyByteBuf buf) {}
 }

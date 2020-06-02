@@ -80,7 +80,7 @@ public class LegacyPingHandler extends ChannelInboundHandlerAdapter {
             // check if not successful, otherwise the connection has already been closed
             if (!legacyPingProtocol) {
                 bytebuf.resetReaderIndex();
-                channelHandlerContext.pipeline().remove("legacy_ping");
+                channelHandlerContext.pipeline().remove("legacy_query");
                 channelHandlerContext.fireChannelRead(object);
             }
         }

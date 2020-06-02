@@ -3,7 +3,6 @@ package org.jungletree.net;
 import io.netty.buffer.ByteBuf;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.api.nbt.*;
 
 import java.io.IOException;
@@ -92,14 +91,6 @@ public final class ByteBufUtils {
     public static void writeByteArray(ByteBuf buf, byte[] value) {
         writeVarInt(buf, value.length);
         buf.writeBytes(value);
-    }
-
-    public static ChatMessage readChatMessage(ByteBuf buf) throws IOException {
-        return ChatMessage.fromJson(readString(buf));
-    }
-
-    public static void writeChatMessage(ByteBuf buf, ChatMessage value) throws IOException {
-        writeString(buf, value.toJson().toString());
     }
 
     public static UUID readUuid(ByteBuf buf) {
