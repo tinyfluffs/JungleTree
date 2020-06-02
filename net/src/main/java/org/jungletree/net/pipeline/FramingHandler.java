@@ -3,7 +3,7 @@ package org.jungletree.net.pipeline;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
-import org.jungletree.net.ByteBufUtils;
+import org.jungletree.net.FriendlyByteBuf;
 
 import java.util.List;
 
@@ -31,20 +31,23 @@ public final class FramingHandler extends ByteToMessageCodec<ByteBuf> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) {
-        ByteBufUtils.writeVarInt(out, msg.readableBytes());
-        out.writeBytes(msg);
+        FriendlyByteBuf buf = new FriendlyByteBuf(out);
+        buf.writeVarInt(msg.readableBytes());
+        buf.writeBytes(msg);
     }
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) {
         // check for length field readability
-        in.markReaderIndex();
-        if (!readableVarInt(in)) {
+        msg.markReaderIndex();
+        if (!readableVarInt(msg)) {
             return;
         }
 
+        FriendlyByteBuf in = new FriendlyByteBuf(msg);
+
         // check for contents readability
-        int length = ByteBufUtils.readVarInt(in);
+        int length = in.readVarInt();
         if (in.readableBytes() < length) {
             in.resetReaderIndex();
             return;
