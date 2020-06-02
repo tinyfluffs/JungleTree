@@ -33,6 +33,6 @@ public class StatusRequestHandler implements Handler<StatusRequestPacket> {
             response.put("favicon", "data:image/png;base64," + Base64.getEncoder().encodeToString(favicon));
         }
 
-        session.send(StatusResponsePacket.builder().json(response.toString()).build());
+        session.send(new StatusResponsePacket(response.toString()));
     }
 }

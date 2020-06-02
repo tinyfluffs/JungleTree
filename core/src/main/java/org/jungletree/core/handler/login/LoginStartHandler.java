@@ -14,13 +14,11 @@ public class LoginStartHandler implements Handler<LoginStartPacket> {
         if (server().isEncryptionEnabled()) {
             session.setVerifyUsername(pkt.getUsername());
 
-            session.send(
-                    EncryptionRequestPacket.builder()
-                            .sessionId(session.getSessionId())
-                            .publicKey(session.getNetworkServer().getPublicKey().getEncoded())
-                            .verifyToken(session.generateVerifyToken())
-                            .build()
-            );
+            session.send(new EncryptionRequestPacket(
+                    session.getSessionId(),
+                    session.getNetworkServer().getPublicKey().getEncoded(),
+                    session.generateVerifyToken()
+            ));
         }
     }
 }

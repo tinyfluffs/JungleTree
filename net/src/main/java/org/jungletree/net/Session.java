@@ -15,7 +15,7 @@ import org.jungletree.net.http.HttpCallback;
 import org.jungletree.net.packet.DisconnectPacket;
 import org.jungletree.net.packet.Handler;
 import org.jungletree.net.packet.play.KeepAlivePacket;
-import org.jungletree.net.pipeline.CodecHandler;
+import org.jungletree.net.pipeline.PacketCodecHandler;
 import org.jungletree.net.pipeline.EncryptionHandler;
 import org.jungletree.net.protocol.LoginProtocol;
 import org.jungletree.net.protocol.Protocol;
@@ -128,7 +128,7 @@ public final class Session {
 
     public void setProtocol(Protocol protocol) {
         this.channel.flush();
-        updatePipeline("codecs", new CodecHandler(protocol));
+        updatePipeline("codecs", new PacketCodecHandler(protocol));
         this.protocol = protocol;
     }
 
@@ -155,7 +155,7 @@ public final class Session {
     }
 
     public void disconnect(ChatMessage reason) {
-        send(DisconnectPacket.builder().reason(reason).build());
+        send(new DisconnectPacket(reason));
         channel.flush();
         channel.close();
     }
@@ -258,7 +258,7 @@ public final class Session {
         keepAliveTask = scheduler("NETWORK").scheduleAtFixedRate(() -> {
             final long time = System.nanoTime();
             this.lastPing.set(time);
-            send(KeepAlivePacket.builder().id(time).build());
+            send(new KeepAlivePacket(time));
         }, 0L, 1L, TimeUnit.SECONDS);
     }
 

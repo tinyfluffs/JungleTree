@@ -25,7 +25,7 @@ public class JungleChannelInitializer extends ChannelInitializer<SocketChannel> 
     @Override
     protected final void initChannel(SocketChannel c) {
         PacketHandler handler = new PacketHandler(networkServer);
-        CodecHandler codecs = new CodecHandler(Protocols.HANDSHAKE.getProtocol());
+        PacketCodecHandler codecs = new PacketCodecHandler(Protocols.HANDSHAKE.getProtocol());
         FramingHandler framing = new FramingHandler();
 
         try {
@@ -35,10 +35,12 @@ public class JungleChannelInitializer extends ChannelInitializer<SocketChannel> 
         }
 
         c.pipeline()
-                .addLast("idle_timeout", new IdleStateHandler(READ_IDLE_TIMEOUT, WRITE_IDLE_TIMEOUT, 0))
-                .addLast("legacy_ping", new LegacyPingHandler())
+                .addLast("timeout", new IdleStateHandler(READ_IDLE_TIMEOUT, WRITE_IDLE_TIMEOUT, 0))
+                .addLast("legacy_query", new LegacyPingHandler())
                 .addLast("encryption", NoOpHandler.INSTANCE)
-                .addLast("framing", framing).addLast("compression", NoOpHandler.INSTANCE)
-                .addLast("codecs", codecs).addLast("handler", handler);
+                .addLast("framing", framing)
+                .addLast("compression", NoOpHandler.INSTANCE)
+                .addLast("codecs", codecs)
+                .addLast("handler", handler);
     }
 }

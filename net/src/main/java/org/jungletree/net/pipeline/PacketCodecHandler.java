@@ -3,12 +3,11 @@ package org.jungletree.net.pipeline;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToMessageCodec;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
-import org.jungletree.net.Codec;
+import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 import org.jungletree.net.protocol.Protocol;
 
@@ -19,37 +18,32 @@ import static org.jungletree.net.ByteBufUtils.writeVarInt;
 
 @Log4j2
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public final class CodecHandler extends MessageToMessageCodec<ByteBuf, Packet> {
+public final class PacketCodecHandler extends MessageToMessageCodec<ByteBuf, Packet> {
 
     Protocol protocol;
 
-    public CodecHandler(Protocol protocol) {
+    public PacketCodecHandler(Protocol protocol) {
         this.protocol = protocol;
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, Packet msg, List<Object> out) throws Exception {
-        Class<? extends Packet> clazz = msg.getClass();
-        Codec.CodecRegistration reg = protocol.getCodecRegistration(clazz);
-        if (reg == null) {
-            throw new EncoderException("Unknown message type: " + clazz + ".");
-        }
-
+    protected void encode(ChannelHandlerContext ctx, Packet msg, List<Object> out) {
         ByteBuf headerBuf = ctx.alloc().buffer();
-        writeVarInt(headerBuf, reg.getOpcode());
-        ByteBuf messageBuf = ctx.alloc().buffer();
-        messageBuf = reg.getCodec().encode(messageBuf, msg);
+        writeVarInt(headerBuf, protocol.getPacketId(msg.getClass()));
+        FriendlyByteBuf messageBuf = new FriendlyByteBuf(ctx.alloc().buffer());
+        msg.encode(messageBuf);
         out.add(Unpooled.wrappedBuffer(headerBuf, messageBuf));
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+        FriendlyByteBuf buf = new FriendlyByteBuf(msg);
         int id = readVarInt(msg);
-        Codec<?> codec = protocol.find(id);
-        Packet decoded = codec.decode(msg);
+        Packet packet = protocol.find(id);
+        packet.decode(buf);
         if (msg.readableBytes() > 0) {
-            log.warn("Packet was not fully read: remaining={}, packet={}", msg.readableBytes(), decoded);
+            log.warn("Packet was not fully read: remaining={}, packet={}", msg.readableBytes(), packet);
         }
-        out.add(decoded);
+        out.add(packet);
     }
 }

@@ -64,7 +64,10 @@ public class JungleServer implements Server {
         Path configFile = Paths.get("config.toml");
         if (!Files.exists(configFile)) {
             try {
-                Files.write(configFile, Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream("config.toml")).readAllBytes());
+                Files.write(configFile,
+                        Objects.requireNonNull(Thread.currentThread()
+                                .getContextClassLoader()
+                                .getResourceAsStream("config.toml")).readAllBytes());
             } catch (IOException ex) {
                 throw new StartupException("Failed to write new configuration: ", ex);
             }
@@ -210,13 +213,7 @@ public class JungleServer implements Server {
         player.onPreJoin(); // TODO: Events
         session.setOnline(true);
 
-        session.send(
-                LoginSuccessPacket.builder()
-                        .uuid(player.getUuid())
-                        .username(player.getUsername())
-                        .build()
-        );
-
+        session.send(new LoginSuccessPacket(player.getUuid(), player.getUsername()));
         session.setProtocol(Protocols.PLAY.getProtocol());
         this.onlinePlayers.put(uuid, player);
 

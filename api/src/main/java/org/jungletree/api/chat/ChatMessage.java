@@ -8,7 +8,7 @@ import org.json.JSONObject;
 @Builder
 public class ChatMessage {
     String text;
-    
+
     public final JSONObject toJson() {
         var result = new JSONObject();
         result.put("text", text);

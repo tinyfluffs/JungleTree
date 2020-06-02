@@ -1,3 +1,8 @@
 package org.jungletree.net;
 
-public interface Packet {}
+public interface Packet {
+
+    void encode(FriendlyByteBuf buf);
+
+    void decode(FriendlyByteBuf buf);
+}
