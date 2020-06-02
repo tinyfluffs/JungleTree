@@ -8,7 +8,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
 import org.jungletree.net.Packet;
 import org.jungletree.net.packet.Handler;
-import org.jungletree.net.service.HandlerLookupService;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -22,32 +21,37 @@ public abstract class Protocol {
 
     Map<Integer, Class<? extends Packet>> inbound;
     Map<Integer, Class<? extends Packet>> outbound;
-    HandlerLookupService handlers;
+    Map<Class<? extends Packet>, Handler<? extends Packet>> handlers;
 
     public Protocol(String name) {
         this.name = name;
         this.inbound = new ConcurrentHashMap<>();
         this.outbound = new ConcurrentHashMap<>();
-        this.handlers = new HandlerLookupService();
+        this.handlers = new ConcurrentHashMap<>();
     }
 
-    public <P extends Packet, H extends Handler<P>> void handler(Class<P> packet, Class<H> handler) {
+    public <P extends Packet, H extends Handler<P>> void handler(Class<P> packet, Class<H> handlerClass) {
         try {
-            handlers.bind(packet, handler);
+            Handler<P> handler = handlerClass.getDeclaredConstructor().newInstance();
+            handlers.put(packet, handler);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
-            log.error("Error registering inbound handler {} for packet {}: protocol={}",
-                    handler.getSimpleName(),
+            log.error(
+                    "Error registering inbound handler {} for packet {}: protocol={}",
+                    handlerClass.getSimpleName(),
                     packet.getSimpleName(),
                     getName(),
-                    ex);
+                    ex
+            );
         }
     }
 
     protected <P extends Packet> void inbound(int packetId, Class<P> packet) {
         if (this.inbound.containsKey(packetId)) {
-            log.error("Inbound packet already registered: {}, claimed by: {}",
+            log.error(
+                    "Inbound packet already registered: {}, claimed by: {}",
                     packetId,
-                    this.inbound.get(packetId).getSimpleName());
+                    this.inbound.get(packetId).getSimpleName()
+            );
             return;
         }
         try {
@@ -61,9 +65,11 @@ public abstract class Protocol {
 
     protected <P extends Packet> void outbound(int packetId, Class<P> packet) {
         if (this.outbound.containsKey(packetId)) {
-            log.error("Inbound packet already registered: {}, claimed by: {}",
+            log.error(
+                    "Inbound packet already registered: {}, claimed by: {}",
                     packetId,
-                    this.outbound.get(packetId).getSimpleName());
+                    this.outbound.get(packetId).getSimpleName()
+            );
             return;
         }
         try {
@@ -76,7 +82,7 @@ public abstract class Protocol {
     }
 
     public <P extends Packet> Handler<P> getPacketHandler(Class<P> clazz) {
-        Handler<P> handler = handlers.find(clazz);
+        Handler<P> handler = (Handler<P>) handlers.get(clazz);
         if (handler == null) {
             log.warn("No handler for packet {}: protocol={}", clazz.getSimpleName(), getName());
         }
