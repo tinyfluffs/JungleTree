@@ -23,36 +23,10 @@
  */
 package org.jungletree.api.nbt;
 
-import lombok.Getter;
-import lombok.Setter;
+@SuppressWarnings("rawtypes")
+public class InvalidTagException extends Exception {
 
-@Getter
-@Setter
-public final class StringTag extends NamedTag<String> {
-
-    private String value;
-
-    public StringTag(String name, String value) {
-        super(name);
-        this.value = value;
-    }
-
-    @Override
-    public TagType getType() {
-        return TagType.TAG_STRING;
-    }
-
-    @Override
-    public String toString() {
-        String name = getName();
-        String append = "";
-        if (name != null && !name.equals("")) {
-            append = "(\"" + this.getName() + "\")";
-        }
-        return "TAG_String" + append + ": " + value;
-    }
-
-    public StringTag clone() {
-        return new StringTag(getName(), value);
+    public InvalidTagException(Tag t) {
+        System.out.println("Invalid tag: " + t.toString() + " encountered!");
     }
 }

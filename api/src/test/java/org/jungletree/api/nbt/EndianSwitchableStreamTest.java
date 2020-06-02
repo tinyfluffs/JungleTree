@@ -23,36 +23,33 @@
  */
 package org.jungletree.api.nbt;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.junit.jupiter.api.Test;
 
-@Getter
-@Setter
-public final class StringTag extends NamedTag<String> {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteOrder;
 
-    private String value;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    public StringTag(String name, String value) {
-        super(name);
-        this.value = value;
-    }
+public class EndianSwitchableStreamTest {
 
-    @Override
-    public TagType getType() {
-        return TagType.TAG_STRING;
-    }
+    @Test
+    public void testWriteLEUnsignedShort() throws IOException {
+        int unsigned = Short.MAX_VALUE + 5;
+        char testChar = 'b';
 
-    @Override
-    public String toString() {
-        String name = getName();
-        String append = "";
-        if (name != null && !name.equals("")) {
-            append = "(\"" + this.getName() + "\")";
-        }
-        return "TAG_String" + append + ": " + value;
-    }
+        ByteArrayOutputStream rawOutput = new ByteArrayOutputStream();
+        EndianSwitchableOutputStream output = new EndianSwitchableOutputStream(rawOutput, ByteOrder.LITTLE_ENDIAN);
+        output.writeShort(unsigned);
+        output.writeChar(testChar);
 
-    public StringTag clone() {
-        return new StringTag(getName(), value);
+        EndianSwitchableInputStream input = new EndianSwitchableInputStream(
+                new ByteArrayInputStream(rawOutput.toByteArray()),
+                ByteOrder.LITTLE_ENDIAN
+        );
+
+        assertEquals(unsigned, input.readUnsignedShort());
+        assertEquals(testChar, input.readChar());
     }
 }
