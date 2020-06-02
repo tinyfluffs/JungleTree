@@ -1,6 +1,7 @@
 package org.jungletree.net.packet.status;
 
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 
@@ -9,6 +10,7 @@ import org.jungletree.net.Packet;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class StatusPingPacket implements Packet {
 
     long time;

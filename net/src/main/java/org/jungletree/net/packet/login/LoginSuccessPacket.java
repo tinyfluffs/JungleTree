@@ -1,6 +1,7 @@
 package org.jungletree.net.packet.login;
 
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginSuccessPacket implements Packet {
 
     UUID uuid;

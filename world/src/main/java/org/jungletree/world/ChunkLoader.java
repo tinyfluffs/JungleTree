@@ -2,31 +2,31 @@ package org.jungletree.world;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.api.world.ChunkPos;
 import org.jungletree.world.chunk.JungleChunk;
 
-import java.util.SortedMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ChunkLoader {
 
     JungleWorld world;
-    SortedMap<ChunkPos, JungleChunk> loaded;
+    Map<Integer, JungleChunk> loaded;
 
     public ChunkLoader(JungleWorld world) {
         this.world = world;
-        this.loaded = new ConcurrentSkipListMap<>();
+        this.loaded = new ConcurrentHashMap<>();
     }
 
-    public JungleChunk getOrGenerate(int chunkX, int chunkZ) {
-        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-        if (loaded.containsKey(pos)) {
-            return loaded.get(pos);
+    public JungleChunk getOrGenerate(int cx, int cz) {
+        int hash = Objects.hash(cx, cz);
+        if (loaded.containsKey(hash)) {
+            return loaded.get(hash);
         } else {
-            var chunk = new JungleChunk(world.getHeight());
-            world.getGenerator().generate(chunk, pos);
-            loaded.put(pos, chunk);
+            var chunk = new JungleChunk(cx, cz, world.getHeight());
+            world.getGenerator().generate(chunk, cx, cz);
+            loaded.put(hash, chunk);
             return chunk;
         }
     }

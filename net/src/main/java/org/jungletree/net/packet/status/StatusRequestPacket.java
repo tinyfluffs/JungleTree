@@ -1,6 +1,7 @@
 package org.jungletree.net.packet.status;
 
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 
@@ -8,6 +9,7 @@ import org.jungletree.net.Packet;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class StatusRequestPacket implements Packet {
 
     @Override

@@ -1,6 +1,7 @@
 package org.jungletree.net.packet.play;
 
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.jungletree.net.FriendlyByteBuf;
 import org.jungletree.net.Packet;
 import org.jungletree.net.exception.PluginDataException;
@@ -10,6 +11,7 @@ import org.jungletree.net.exception.PluginDataException;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class PluginDataPacket implements Packet {
 
     String channel;
