@@ -1,7 +1,6 @@
 package org.jungletree.net;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -100,9 +99,9 @@ public class NetworkServer {
     }
 
     public byte[] getBrandData() {
-        ByteBuf buf = Unpooled.buffer(0);
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer(0));
         var brand = JungleTree.server().getImplementationName().getBytes(StandardCharsets.UTF_8);
-        ByteBufUtils.writeVarInt(buf, brand.length);
+        buf.writeVarInt(brand.length);
         buf.writeBytes(brand);
         var result = new byte[buf.readableBytes()];
         buf.readBytes(result);

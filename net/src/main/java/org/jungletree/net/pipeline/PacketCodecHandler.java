@@ -13,9 +13,6 @@ import org.jungletree.net.protocol.Protocol;
 
 import java.util.List;
 
-import static org.jungletree.net.ByteBufUtils.readVarInt;
-import static org.jungletree.net.ByteBufUtils.writeVarInt;
-
 @Log4j2
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public final class PacketCodecHandler extends MessageToMessageCodec<ByteBuf, Packet> {
@@ -28,17 +25,17 @@ public final class PacketCodecHandler extends MessageToMessageCodec<ByteBuf, Pac
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Packet msg, List<Object> out) {
-        ByteBuf headerBuf = ctx.alloc().buffer();
-        writeVarInt(headerBuf, protocol.getPacketId(msg.getClass()));
+        FriendlyByteBuf headerBuf = new FriendlyByteBuf(ctx.alloc().buffer());
+        headerBuf.writeVarInt(protocol.getPacketId(msg.getClass()));
         FriendlyByteBuf messageBuf = new FriendlyByteBuf(ctx.alloc().buffer());
         msg.encode(messageBuf);
         out.add(Unpooled.wrappedBuffer(headerBuf, messageBuf));
     }
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) {
         FriendlyByteBuf buf = new FriendlyByteBuf(msg);
-        int id = readVarInt(msg);
+        int id = buf.readVarInt();
         Packet packet = protocol.find(id);
         packet.decode(buf);
         if (msg.readableBytes() > 0) {
