@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
-import org.jungletree.api.JungleTree;
 import org.jungletree.api.Player;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.net.exception.ChannelClosedException;
@@ -57,16 +56,11 @@ public final class Session {
     final AtomicBoolean compressionEnabled = new AtomicBoolean();
 
     final AtomicBoolean online = new AtomicBoolean();
-    final AtomicBoolean disconnected = new AtomicBoolean();
     final AtomicLong lastPing = new AtomicLong();
     final AtomicLong lastPong = new AtomicLong();
 
     @Getter final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
-
-    // TODO: Migrate encryption stuff away so that this doesn't need to be accessible from the session object
-    @Deprecated
     @Getter final NetworkServer networkServer;
-
     @Getter final SocketChannel channel;
     AtomicReference<Protocol> protocol;
     @Getter @Setter String verifyUsername;
@@ -85,6 +79,10 @@ public final class Session {
 
     public boolean isEncryptionEnabled() {
         return server().isEncryptionEnabled() && this.encryptionEnabled.get();
+    }
+
+    public void setEncryptionEnabled(boolean encryptionEnabled) {
+        this.encryptionEnabled.set(encryptionEnabled);
     }
 
     public boolean isCompressionEnabled() {
@@ -158,13 +156,10 @@ public final class Session {
         this.callback = callback;
     }
 
-    public boolean isActive() {
-        return channel.isOpen();
-    }
-
     public void disconnect() {
         try {
             channel.close();
+            onDisconnect();
         } catch (IOException ignored) {}
     }
 
@@ -181,7 +176,7 @@ public final class Session {
     }
 
     public void onDisconnect() {
-        this.disconnected.set(true);
+        log.error("Disconnected");
         if (keepAliveTask != null) {
             keepAliveTask.cancel(true);
         }
@@ -265,7 +260,7 @@ public final class Session {
             return;
         }
 
-        JungleTree.scheduler("NETWORK").submit(() -> {
+        scheduler("NETWORK").submit(() -> {
             try {
                 URL url = new URL(String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8)));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));

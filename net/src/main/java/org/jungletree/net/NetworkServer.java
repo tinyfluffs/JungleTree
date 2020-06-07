@@ -19,6 +19,7 @@ public class NetworkServer {
     public NetworkServer() throws StartupException {
         this.keyPair = generateKeyPair();
         this.networkTask = new NetworkTask(this);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     public void bind(final SocketAddress address) {
@@ -32,10 +33,6 @@ public class NetworkServer {
 
     public void shutdown() {
         networkTask.shutdown();
-    }
-
-    public void sessionInactivated(Session session) {
-        session.setOnline(false);
     }
 
     public void send(Session session, Packet packet, Consumer<Throwable> callback) {

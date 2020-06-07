@@ -5,19 +5,16 @@ import org.jungletree.api.JungleTree;
 import org.jungletree.api.Scheduler;
 import org.jungletree.api.net.ByteBuf;
 import org.jungletree.api.net.DecoderException;
+import org.jungletree.net.protocol.Protocols;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.HashMap;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -40,7 +37,7 @@ public class NetworkTask implements Runnable {
     public NetworkTask(NetworkServer networkServer) {
         this.networkServer = networkServer;
         this.scheduler = JungleTree.scheduler("NETWORK");
-        this.sessions = new HashMap<>();
+        this.sessions = new ConcurrentHashMap<>();
     }
 
     public void bind(SocketAddress address) throws IOException {
@@ -49,7 +46,15 @@ public class NetworkTask implements Runnable {
         serverChannel.configureBlocking(false);
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         serverChannel.bind(address, 1000);
+
         run();
+    }
+
+    public void disconnect(SocketChannel channel) {
+        Session session = this.sessions.remove(channel);
+        if (session != null) {
+            session.onDisconnect();
+        }
     }
 
     public void shutdown() {
@@ -63,20 +68,13 @@ public class NetworkTask implements Runnable {
 
     @Override
     public void run() {
-        ByteBuffer bb = ByteBuffer.allocate(MTU);
-        ByteBuf buf = new ByteBuf(null);
-        SocketChannel channel;
-        Session session;
         int keys;
-        int bytesRead;
-        int readableLength;
-        int length;
         Iterator<SelectionKey> it;
         SelectionKey key;
 
         while (serverChannel.isOpen()) {
             try {
-                keys = selector.select(TimeUnit.SECONDS.toMillis(READ_IDLE_TIMEOUT));
+                keys = selector.selectNow();
                 if (keys == 0) {
                     continue;
                 }
@@ -86,95 +84,25 @@ public class NetworkTask implements Runnable {
                     key = it.next();
                     try {
                         if (!key.isValid()) {
-                            it.remove();
                             continue;
                         }
 
                         if (key.isAcceptable()) {
-                            channel = serverChannel.accept();
-                            if (channel == null) {
-                                it.remove();
-                                continue;
-                            }
+                            accept(key);
+                        }
 
-                            channel.configureBlocking(false);
-                            channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-
-                            channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-                            channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                        if (key.isReadable()) {
                             try {
-                                channel.setOption(StandardSocketOptions.IP_TOS, 0x18);
-                            } catch (IOException ignored) {
-                                log.warn("Runtime OS does not support IP_TOS");
-                            }
-
-                            session = new Session(networkServer, channel);
-                            this.sessions.put(channel, session);
-                            session.onConnect();
-                        } else if (key.isReadable()) {
-                            try {
-                                channel = (SocketChannel) key.channel();
-                                session = this.sessions.get(channel);
-                                if (session == null) {
-                                    it.remove();
-                                    throw new DecoderException("session is null!");
-                                }
-
-                                bytesRead = channel.read(bb);
-                                if (bytesRead <= 0) {
-                                    it.remove();
-                                    continue;
-                                }
-
-                                buf.setSource(bb.slice(0, bytesRead));
-
-                                if (session.isEncryptionEnabled()) {
-                                    buf.setSource(session.getDecodeBuffer().crypt(buf.getSource()));
-                                }
-
-                                if (legacyRead(buf)) {
-                                    it.remove();
-                                    continue;
-                                }
-
-                                buf.mark();
-                                readableLength = buf.varIntReadableLength();
-                                if (readableLength <= 0) {
-                                    it.remove();
-                                    continue;
-                                }
-                                length = buf.readVarInt();
-                                if (buf.remaining() < length) {
-                                    it.remove();
-                                    throw new DecoderException(String.format("packet too short: expected=%d, actual=%d", length, buf.remaining()));
-                                }
-                                buf.setSource(buf.getSource().slice(readableLength, length));
-
-                                if (session.isCompressionEnabled()) {
-                                    // TODO: Decompress
-                                }
-
-                                session.packetReceived(decode(session, buf));
+                                read(key);
                             } catch (RuntimeException ex) {
                                 log.error("", ex);
-                            } finally {
-                                bb.clear();
-                                buf.setSource(null);
                             }
                         }
+                    } catch (CancelledKeyException ignored) {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
-                }
-
-                Set<SocketChannel> clients = Set.copyOf(sessions.keySet());
-                for (SocketChannel c : clients) {
-                    if (!c.isOpen()) {
-                        session = this.sessions.remove(c);
-                        if (session != null) {
-                            session.onDisconnect();
-                        }
-                    }
+                    it.remove();
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -182,17 +110,101 @@ public class NetworkTask implements Runnable {
         }
     }
 
+    private void accept(SelectionKey key) throws IOException {
+        SocketChannel channel = ((ServerSocketChannel) key.channel()).accept();
+        if (channel == null) {
+            return;
+        }
+
+        channel.configureBlocking(false);
+        channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+
+        channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+        channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+        try {
+            channel.setOption(StandardSocketOptions.IP_TOS, 0x18);
+        } catch (IOException ignored) {
+            log.warn("Runtime OS does not support IP_TOS");
+        }
+
+        Session session = this.sessions.get(channel);
+        if (session != null) {
+            log.error("Session already open");
+            return;
+        }
+
+        log.error("New session");
+        session = new Session(networkServer, channel);
+        session.setProtocol(Protocols.HANDSHAKE.getProtocol());
+        session.onConnect();
+        log.error(channel.getRemoteAddress().toString());
+        this.sessions.put(channel, session);
+    }
+
+    private void read(SelectionKey key) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
+
+        Session session = this.sessions.get(channel);
+        if (session == null) {
+            log.error("Session null");
+            return;
+        }
+
+        if (!channel.isOpen()) {
+            log.error("Channel closed");
+            sessions.remove(channel);
+            session.onDisconnect();
+            return;
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(MTU);
+
+        int bytesRead = channel.read(bb);
+        if (bytesRead <= 0) {
+            return;
+        }
+        read(session, bb, bytesRead);
+    }
+
+    public void read(Session session, ByteBuffer bb, int bytesRead) {
+        ByteBuffer backing = ByteBuffer.allocateDirect(bytesRead);
+        backing.put(bb.slice(0, bytesRead));
+        backing.flip();
+        ByteBuf buf = new ByteBuf(backing);
+
+        if (session.isEncryptionEnabled()) {
+            buf.setSource(session.getDecodeBuffer().crypt(buf.getSource()));
+        }
+
+        if (legacyRead(buf)) {
+            log.error("Legacy read");
+            return;
+        }
+
+        buf.mark();
+        int readableLength = buf.varIntReadableLength();
+        if (readableLength <= 0) {
+            return;
+        }
+
+        int length = buf.readVarInt();
+        if (buf.remaining() < length) {
+            throw new DecoderException(String.format("packet too short: expected=%d, actual=%d", length, buf.remaining()));
+        }
+
+        buf.setSource(buf.getSource().slice(readableLength, length));
+
+        if (session.isCompressionEnabled()) {
+            // TODO: Decompress
+        }
+
+        session.packetReceived(decode(session, buf));
+    }
+
     public void send(Session session, Packet packet, Consumer<Throwable> callback) {
         try {
             scheduler.submit(() -> {
                 try {
-                    if (!session.getChannel().isOpen()) {
-                        session.onDisconnect();
-                        session.disconnect();
-                        sessions.remove(session.getChannel());
-                        return;
-                    }
-
                     ByteBuf buf = new ByteBuf(ByteBuffer.allocate(MTU - 5));
                     int id = session.getProtocol().getPacketId(packet.getClass());
                     buf.writeVarInt(id);
