@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jungletree.api.GameVersion;
 import org.jungletree.api.Player;
 import org.jungletree.api.Server;
@@ -25,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JungleServer implements Server {
 
-    final SortedMap<UUID, JunglePlayer> onlinePlayers;
+    final Map<UUID, JunglePlayer> onlinePlayers;
 
     String host;
     int port;
@@ -54,7 +56,7 @@ public class JungleServer implements Server {
     Executor networkExecutor;
 
     public JungleServer() {
-        this.onlinePlayers = new TreeMap<>();
+        this.onlinePlayers = new ConcurrentHashMap<>();
 
         PacketHandlers.registerAll();
     }
@@ -96,6 +98,7 @@ public class JungleServer implements Server {
         } catch (IOException ex) {
             throw new StartupException("Failed to read from configuration: ", ex);
         }
+
 
         this.networkServer = new NetworkServer();
         this.networkExecutor = Executors.newSingleThreadExecutor();
@@ -158,8 +161,12 @@ public class JungleServer implements Server {
             }
         }
 
+        JSONObject p;
         for (int i = 0; i < sampleSize; i++) {
-            result.put(players.get(i).getProfile());
+            p = new JSONObject();
+            p.put("name", players.get(i).getUsername());
+            p.put("id", players.get(i).getUuid().toString());
+            result.put(p);
         }
         return result;
     }
@@ -175,9 +182,6 @@ public class JungleServer implements Server {
     }
 
     public void setPlayer(Session session, UUID uuid, String username, ProfileItem[] profile) {
-        if (!session.isActive()) {
-            return;
-        }
         var player = new JunglePlayer(session, uuid, username, profile);
         for (Map.Entry<UUID, JunglePlayer> e : this.onlinePlayers.entrySet()) {
             if (e.getValue().getUuid().equals(uuid)) {

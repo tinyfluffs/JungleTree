@@ -1,5 +1,6 @@
 package org.jungletree.core.handler.status;
 
+import lombok.extern.log4j.Log4j2;
 import org.json.JSONObject;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.net.Session;
@@ -11,6 +12,7 @@ import java.util.Base64;
 
 import static org.jungletree.api.JungleTree.server;
 
+@Log4j2
 public class StatusRequestHandler implements Handler<StatusRequestPacket> {
 
     @Override
@@ -33,6 +35,7 @@ public class StatusRequestHandler implements Handler<StatusRequestPacket> {
             response.put("favicon", "data:image/png;base64," + Base64.getEncoder().encodeToString(favicon));
         }
 
+        log.error(response.toString());
         session.send(new StatusResponsePacket(response.toString()));
     }
 }
