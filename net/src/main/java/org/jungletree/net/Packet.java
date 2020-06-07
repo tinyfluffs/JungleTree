@@ -1,8 +1,10 @@
 package org.jungletree.net;
 
+import org.jungletree.api.net.ByteBuf;
+
 public interface Packet {
 
-    void encode(FriendlyByteBuf buf);
+    void encode(ByteBuf buf);
 
-    void decode(FriendlyByteBuf buf);
+    void decode(ByteBuf buf);
 }

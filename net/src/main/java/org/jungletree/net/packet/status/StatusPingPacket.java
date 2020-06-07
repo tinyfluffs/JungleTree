@@ -2,7 +2,7 @@ package org.jungletree.net.packet.status;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 
 @Data
@@ -16,12 +16,12 @@ public class StatusPingPacket implements Packet {
     long time;
 
     @Override
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeLong(this.time);
     }
 
     @Override
-    public void decode(FriendlyByteBuf buf) {
+    public void decode(ByteBuf buf) {
         this.time = buf.readLong();
     }
 }

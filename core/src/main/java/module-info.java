@@ -1,10 +1,10 @@
 module org.jungletree.core {
-    exports org.jungletree.core to org.jungletree.startup;
-    exports org.jungletree.core.handler to org.jungletree.net;
-    exports org.jungletree.core.handler.handshake to org.jungletree.net;
-    exports org.jungletree.core.handler.status to org.jungletree.net;
-    exports org.jungletree.core.handler.login to org.jungletree.net;
-    exports org.jungletree.core.handler.play to org.jungletree.net;
+    exports org.jungletree.core;
+    exports org.jungletree.core.handler;
+    exports org.jungletree.core.handler.handshake;
+    exports org.jungletree.core.handler.status;
+    exports org.jungletree.core.handler.login;
+    exports org.jungletree.core.handler.play;
 
     provides org.jungletree.api.Server with org.jungletree.core.JungleServer;
 

@@ -1,0 +1,74 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        jcenter()
+    }
+    dependencies {
+        classpath "de.jjohannes.gradle:extra-java-module-info:0.1"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'application'
+    id 'de.jjohannes.extra-java-module-info' version '0.1'
+}
+
+application {
+    mainClass = 'org.jungletree.startup.Startup'
+}
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'de.jjohannes.extra-java-module-info'
+
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    group = 'org.jungletree'
+    version = '0.0.1-SNAPSHOT'
+
+    sourceCompatibility = JavaVersion.VERSION_14
+    targetCompatibility = JavaVersion.VERSION_14
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    java {
+        modularity.inferModulePath = true
+    }
+
+    apply plugin: 'de.jjohannes.extra-java-module-info'
+
+    extraJavaModuleInfo {
+        automaticModule("json-20190722.jar", "json")
+        automaticModule("tomlj-1.0.0.jar", "tomlj")
+    }
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':core')
+    implementation project(':scheduler')
+    implementation project(':world')
+    implementation project(':entity')
+    implementation project(':net')
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+}

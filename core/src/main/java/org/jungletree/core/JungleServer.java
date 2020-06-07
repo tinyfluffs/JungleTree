@@ -103,26 +103,6 @@ public class JungleServer implements Server {
     }
 
     @Override
-    public int getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    @Override
-    public void setMaxPlayers(int maxPlayers) {
-        this.maxPlayers = maxPlayers;
-    }
-
-    @Override
-    public int getServerStatusPlayerSampleCount() {
-        return serverStatusPlayerSampleCount;
-    }
-
-    @Override
-    public void setServerStatusPlayerSampleCount(int count) {
-        this.serverStatusPlayerSampleCount = count;
-    }
-
-    @Override
     public String getApiVersion() {
         return Versioning.getApiVersion();
     }
@@ -185,11 +165,6 @@ public class JungleServer implements Server {
     }
 
     @Override
-    public byte[] getFavicon() {
-        return this.favicon;
-    }
-
-    @Override
     public int getEncryptionKeySize() {
         return keySize;
     }
@@ -223,6 +198,6 @@ public class JungleServer implements Server {
         });
 
         player.onJoin();
-        session.startKeepAlive();
+        // session.startKeepAlive();
     }
 }

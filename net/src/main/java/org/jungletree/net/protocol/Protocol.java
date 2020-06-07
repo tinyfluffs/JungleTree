@@ -1,11 +1,11 @@
 package org.jungletree.net.protocol;
 
-import io.netty.handler.codec.DecoderException;
-import io.netty.handler.codec.EncoderException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
+import org.jungletree.api.net.DecoderException;
+import org.jungletree.api.net.EncoderException;
 import org.jungletree.net.Packet;
 import org.jungletree.net.packet.Handler;
 
@@ -81,6 +81,7 @@ public abstract class Protocol {
         this.outbound.put(packetId, packet);
     }
 
+    @SuppressWarnings("unchecked")
     public <P extends Packet> Handler<P> getPacketHandler(Class<P> clazz) {
         Handler<P> handler = (Handler<P>) handlers.get(clazz);
         if (handler == null) {
@@ -94,7 +95,7 @@ public abstract class Protocol {
                 .stream()
                 .filter(e -> e.getKey() == id)
                 .findFirst()
-                .orElseThrow(() -> new DecoderException("Unknown packet id: " + id + "."))
+                .orElseThrow(() -> new DecoderException("Unknown packet id: 0x" + Integer.toHexString(id) + "."))
                 .getValue();
 
         try {

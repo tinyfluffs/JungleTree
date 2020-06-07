@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration status="DEBUG">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] [%c{1}] [%level] %msg%n"/>
     </Console>
   </Appenders>
   <Loggers>
-    <Root level="error"/>
+    <Root level="debug"/>
     <logger name="org.jungletree" level="DEBUG">
-      <AppenderRef ref="Console"/>
-    </logger>
-    <logger name="io.netty" level="WARN">
       <AppenderRef ref="Console"/>
     </logger>
   </Loggers>

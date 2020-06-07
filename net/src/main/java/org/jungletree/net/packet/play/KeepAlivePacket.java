@@ -2,7 +2,7 @@ package org.jungletree.net.packet.play;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 
 @Data
@@ -16,12 +16,12 @@ public class KeepAlivePacket implements Packet {
     long id;
 
     @Override
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeLong(id);
     }
 
     @Override
-    public void decode(FriendlyByteBuf buf) {
+    public void decode(ByteBuf buf) {
         this.id = buf.readLong();
     }
 }

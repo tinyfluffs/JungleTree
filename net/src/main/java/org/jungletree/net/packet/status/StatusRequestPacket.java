@@ -2,7 +2,7 @@ package org.jungletree.net.packet.status;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 
 @Data
@@ -13,8 +13,8 @@ import org.jungletree.net.Packet;
 public class StatusRequestPacket implements Packet {
 
     @Override
-    public void encode(FriendlyByteBuf buf) {}
+    public void encode(ByteBuf buf) {}
 
     @Override
-    public void decode(FriendlyByteBuf buf) {}
+    public void decode(ByteBuf buf) {}
 }

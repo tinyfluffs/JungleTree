@@ -2,7 +2,7 @@ package org.jungletree.net.packet.play;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 import org.jungletree.net.exception.PluginDataException;
 
@@ -18,8 +18,9 @@ public class PluginDataPacket implements Packet {
     byte[] data;
 
     @Override
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeString(this.channel);
+
         var data = this.data;
         if (data.length > Short.MAX_VALUE) {
             throw new PluginDataException(String.format(
@@ -28,13 +29,15 @@ public class PluginDataPacket implements Packet {
                     this.channel,
                     data.length));
         }
+
+        buf.writeVarInt(data.length);
         buf.writeBytes(data);
     }
 
     @Override
-    public void decode(FriendlyByteBuf buf) {
+    public void decode(ByteBuf buf) {
         this.channel = buf.readString();
-        int length = buf.readableBytes();
+        int length = buf.remaining();
         if (length > Short.MAX_VALUE) {
             throw new PluginDataException(String.format(
                     "Plugin data exceeds the maximum length of %d for channel \"%s\": actualLength=%d",
