@@ -1,32 +1,31 @@
 package org.jungletree.net;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
+import org.jungletree.api.JungleTree;
 import org.jungletree.api.Player;
 import org.jungletree.api.chat.ChatMessage;
 import org.jungletree.net.exception.ChannelClosedException;
-import org.jungletree.net.http.HttpCallback;
 import org.jungletree.net.packet.DisconnectPacket;
 import org.jungletree.net.packet.Handler;
 import org.jungletree.net.packet.play.KeepAlivePacket;
-import org.jungletree.net.pipeline.PacketCodecHandler;
-import org.jungletree.net.pipeline.EncryptionHandler;
-import org.jungletree.net.protocol.LoginProtocol;
 import org.jungletree.net.protocol.Protocol;
 import org.jungletree.net.protocol.Protocols;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -40,9 +39,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.jungletree.api.JungleTree.scheduler;
+import static org.jungletree.api.JungleTree.server;
 
 @Log4j2
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -52,25 +53,42 @@ public final class Session {
 
     static final SecureRandom secRandom = new SecureRandom();
 
+    final AtomicBoolean encryptionEnabled = new AtomicBoolean();
+    final AtomicBoolean compressionEnabled = new AtomicBoolean();
+
     final AtomicBoolean online = new AtomicBoolean();
     final AtomicBoolean disconnected = new AtomicBoolean();
     final AtomicLong lastPing = new AtomicLong();
     final AtomicLong lastPong = new AtomicLong();
 
     @Getter final String sessionId = Long.toString(ThreadLocalRandom.current().nextLong(), 16).trim();
+
+    // TODO: Migrate encryption stuff away so that this doesn't need to be accessible from the session object
+    @Deprecated
     @Getter final NetworkServer networkServer;
-    @Getter final Channel channel;
-    @Getter Protocol protocol;
+
+    @Getter final SocketChannel channel;
+    AtomicReference<Protocol> protocol;
     @Getter @Setter String verifyUsername;
     @Getter byte[] verifyToken;
     @Getter Player player;
     Consumer<Player> callback;
-    ScheduledFuture keepAliveTask;
+    ScheduledFuture<?> keepAliveTask;
+    @Getter @Setter private EncryptedBuffer encodeBuffer;
+    @Getter @Setter private EncryptedBuffer decodeBuffer;
 
-    public Session(NetworkServer networkServer, Channel channel) {
+    public Session(NetworkServer networkServer, SocketChannel channel) {
         this.networkServer = networkServer;
         this.channel = channel;
-        this.protocol = Protocols.HANDSHAKE.getProtocol();
+        this.protocol = new AtomicReference<>(Protocols.HANDSHAKE.getProtocol());
+    }
+
+    public boolean isEncryptionEnabled() {
+        return server().isEncryptionEnabled() && this.encryptionEnabled.get();
+    }
+
+    public boolean isCompressionEnabled() {
+        return this.compressionEnabled.get();
     }
 
     public boolean isOnline() {
@@ -92,29 +110,30 @@ public final class Session {
         }
     }
 
-    public ChannelFuture sendFuture(Packet pkt) throws ChannelClosedException {
-        if (!channel.isActive()) {
+    public void sendFuture(Packet pkt) throws ChannelClosedException {
+        if (!channel.isOpen()) {
             throw new ChannelClosedException("Trying to send a message when a session is inactive!");
         }
-        return channel.writeAndFlush(pkt).addListener(future -> {
-            if (future.cause() != null) {
-                onOutboundThrowable(future.cause());
-            }
-        });
+        networkServer.send(this, pkt, this::onOutboundThrowable);
     }
 
     public InetSocketAddress getAddress() {
-        var addr = channel.remoteAddress();
-        if (!(addr instanceof InetSocketAddress)) {
+        try {
+            var addr = channel.getRemoteAddress();
+            if (!(addr instanceof InetSocketAddress)) {
+                return null;
+            }
+            return (InetSocketAddress) addr;
+        } catch (IOException ex) {
+            log.warn("", ex);
             return null;
         }
-        return (InetSocketAddress) addr;
     }
 
     @SuppressWarnings("unchecked")
     public <T extends Packet> void packetReceived(T packet) {
         Class<T> clazz = (Class<T>) packet.getClass();
-        Handler<T> handler = protocol.getPacketHandler(clazz);
+        Handler<T> handler = protocol.get().getPacketHandler(clazz);
         if (handler == null) {
             return;
         }
@@ -126,14 +145,12 @@ public final class Session {
         }
     }
 
-    public void setProtocol(Protocol protocol) {
-        this.channel.flush();
-        updatePipeline("codecs", new PacketCodecHandler(protocol));
-        this.protocol = protocol;
+    public Protocol getProtocol() {
+        return protocol.get();
     }
 
-    public void updatePipeline(String key, ChannelHandler handler) {
-        this.channel.pipeline().replace(key, key, handler);
+    public void setProtocol(Protocol protocol) {
+        this.protocol.set(protocol);
     }
 
     public void setPlayer(Player player, Consumer<Player> callback) {
@@ -142,12 +159,13 @@ public final class Session {
     }
 
     public boolean isActive() {
-        return channel.isActive();
+        return channel.isOpen();
     }
 
     public void disconnect() {
-        channel.flush();
-        channel.close();
+        try {
+            channel.close();
+        } catch (IOException ignored) {}
     }
 
     public void disconnect(String reason) {
@@ -156,8 +174,7 @@ public final class Session {
 
     public void disconnect(ChatMessage reason) {
         send(new DisconnectPacket(reason));
-        channel.flush();
-        channel.close();
+        disconnect();
     }
 
     public void onConnect() {
@@ -192,7 +209,7 @@ public final class Session {
         return token;
     }
 
-    public void enableEncryption(byte[] encodedSharedSecret, byte[] encodedVerifyToken, HttpCallback callback) {
+    public void enableEncryption(byte[] encodedSharedSecret, byte[] encodedVerifyToken, Consumer<String> callback) {
         Cipher cipher;
         var privateKey = this.networkServer.getPrivateKey();
         var storedVerifyUsername = this.verifyUsername;
@@ -226,7 +243,9 @@ public final class Session {
         }
 
         try {
-            updatePipeline("encryption", new EncryptionHandler(sharedSecret));
+            this.encodeBuffer = new EncryptedBuffer(Cipher.ENCRYPT_MODE, sharedSecret);
+            this.decodeBuffer = new EncryptedBuffer(Cipher.DECRYPT_MODE, sharedSecret);
+            this.encryptionEnabled.set(true);
         } catch (GeneralSecurityException ex) {
             log.error("", ex);
             disconnect("Server security error.");
@@ -246,9 +265,22 @@ public final class Session {
             return;
         }
 
-        String url = String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8));
+        JungleTree.scheduler("NETWORK").submit(() -> {
+            try {
+                URL url = new URL(String.format(SESSION_URL + "?username=%s&serverId=%s&ip=%s", storedVerifyUsername, hash, URLEncoder.encode(getAddress().getAddress().getHostAddress(), StandardCharsets.UTF_8)));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                StringBuilder b = new StringBuilder();
 
-        ((LoginProtocol) this.getProtocol()).getHttpClient().connect(url, this.channel.eventLoop(), callback);
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    b.append(line);
+                }
+                reader.close();
+                callback.accept(b.toString());
+            } catch (Exception ex) {
+                disconnect();
+            }
+        });
     }
 
     public void startKeepAlive() {

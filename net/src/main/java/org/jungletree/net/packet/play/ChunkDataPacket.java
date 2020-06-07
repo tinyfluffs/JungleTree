@@ -5,7 +5,7 @@ import lombok.experimental.FieldDefaults;
 import org.jungletree.api.nbt.CompoundTag;
 import org.jungletree.api.world.biome.Biome;
 import org.jungletree.api.world.biome.BiomeType;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 import org.jungletree.world.chunk.JungleChunk;
 
@@ -48,7 +48,7 @@ public class ChunkDataPacket implements Packet {
     }
 
     @Override
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeInt(this.x);
         buf.writeInt(this.z);
         buf.writeBoolean(this.fullChunk);
@@ -67,7 +67,7 @@ public class ChunkDataPacket implements Packet {
     }
 
     @Override
-    public void decode(FriendlyByteBuf buf) {
+    public void decode(ByteBuf buf) {
         this.x = buf.readInt();
         this.z = buf.readInt();
         this.fullChunk = buf.readBoolean();
@@ -90,13 +90,13 @@ public class ChunkDataPacket implements Packet {
         }
     }
 
-    private void encodeBiomes(FriendlyByteBuf buf) {
+    private void encodeBiomes(ByteBuf buf) {
         for (Biome biome : this.biomes) {
             buf.writeInt(biome.getId());
         }
     }
 
-    private void decodeBiomes(FriendlyByteBuf buf) {
+    private void decodeBiomes(ByteBuf buf) {
         for (int i = 0; i < this.biomes.length; i++) {
             this.biomes[i] = BiomeType.fromId(buf.readInt()).orElseThrow().get();
         }

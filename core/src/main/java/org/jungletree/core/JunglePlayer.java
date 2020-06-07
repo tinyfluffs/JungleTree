@@ -10,6 +10,7 @@ import org.jungletree.net.Session;
 import org.jungletree.net.packet.play.PluginDataPacket;
 import org.jungletree.world.JungleWorld;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -75,7 +76,7 @@ public class JunglePlayer implements Player, Comparable<JunglePlayer> {
 
     public void onJoin() {
         log.info("{} joined the game", username);
-        session.send(new PluginDataPacket("minecraft:brand", session.getNetworkServer().getBrandData()));
+        session.send(new PluginDataPacket("minecraft:brand", JungleTree.server().getImplementationName().getBytes(StandardCharsets.UTF_8)));
 
         JungleWorld world = new JungleWorld(UUID.randomUUID(), "world", 0, 256, JungleTree.generator("CHECKERBOARD"));
         // TODO: Send chunk

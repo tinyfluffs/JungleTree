@@ -1,5 +1,5 @@
 module org.jungletree.entity {
-    exports org.jungletree.entity to org.jungletree.core;
+    exports org.jungletree.entity;
 
     requires static lombok;
 

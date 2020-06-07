@@ -2,7 +2,7 @@ package org.jungletree.net.packet.handshake;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.jungletree.net.FriendlyByteBuf;
+import org.jungletree.api.net.ByteBuf;
 import org.jungletree.net.Packet;
 import org.jungletree.net.protocol.Protocols;
 
@@ -20,7 +20,7 @@ public class HandshakePacket implements Packet {
     Protocols nextState;
 
     @Override
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(ByteBuf buf) {
         buf.writeVarInt(this.protocolVersion);
         buf.writeString(this.address);
         buf.writeShort(this.port);
@@ -28,7 +28,7 @@ public class HandshakePacket implements Packet {
     }
 
     @Override
-    public void decode(FriendlyByteBuf buf) {
+    public void decode(ByteBuf buf) {
         this.protocolVersion = buf.readVarInt();
         this.address = buf.readString();
         this.port = buf.readShort();
