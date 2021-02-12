@@ -135,7 +135,7 @@ public class JungleServer implements Server {
 
     @Override
     public GameVersion[] getSupportedGameVersions() {
-        return new GameVersion[]{GameVersion.VERSION_1_15_2};
+        return new GameVersion[]{GameVersion.VERSION_1_16_5};
     }
 
     @Override

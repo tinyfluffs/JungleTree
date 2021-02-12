@@ -8,7 +8,7 @@ import org.json.JSONObject;
 @Getter
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public enum GameVersion {
-    VERSION_1_15_2("1.15.2", 578);
+    VERSION_1_16_5("1.16.5", 754);
     
     String name;
     int protocol;
