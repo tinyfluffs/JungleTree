@@ -4,19 +4,19 @@ dependencies {
     implementation project(':entity')
     implementation project(':net')
 
-    annotationProcessor 'org.projectlombok:lombok:1.18.12'
-    compileOnly 'org.projectlombok:lombok:1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.18'
+    compileOnly 'org.projectlombok:lombok:1.18.18'
 
-    implementation 'org.apache.commons:commons-lang3:3.10'
-    implementation 'org.json:json:20190722'
-    implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+    implementation 'org.apache.commons:commons-lang3:3.11'
+    implementation 'org.json:json:20201115'
+    implementation 'org.apache.logging.log4j:log4j-api:2.14.0'
     implementation ('org.tomlj:tomlj:1.0.0') {
         exclude (group: 'com.google.code.findbugs', module: 'jsr305')
     }
 
-    testCompileOnly 'org.projectlombok:lombok:1.18.12'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testCompileOnly 'org.projectlombok:lombok:1.18.18'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.18'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.1'
 }

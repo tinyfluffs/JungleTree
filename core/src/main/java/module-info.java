@@ -6,8 +6,6 @@ module org.jungletree.core {
     exports org.jungletree.core.handler.login;
     exports org.jungletree.core.handler.play;
 
-    provides org.jungletree.api.Server with org.jungletree.core.JungleServer;
-
     requires static lombok;
 
     requires org.jungletree.api;
@@ -19,4 +17,6 @@ module org.jungletree.core {
     requires java.desktop;
     requires org.jungletree.entity;
     requires org.jungletree.world;
+
+    provides org.jungletree.api.Server with org.jungletree.core.JungleServer;
 }
